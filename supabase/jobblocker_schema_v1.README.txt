@@ -1,0 +1,2 @@
+Place the downloaded jobblocker_schema_v1.sql file here.
+Run it in the Supabase SQL editor before using the app.

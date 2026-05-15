@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JobBlocker App Scaffold v1
 
-## Getting Started
+This is the first real app scaffold for JobBlocker.
 
-First, run the development server:
+It is intentionally boring:
+- Next.js App Router
+- TypeScript
+- Tailwind
+- Supabase client/server helpers
+- Basic Jobs CRUD starter
+- Local UI components, no shadcn install required yet
+
+## What this scaffold proves
+
+First real build goal:
+
+```txt
+Create Job → Save to Supabase → Fetch Jobs → Render Jobs List
+```
+
+No Pro features yet. No Stripe yet. No file upload yet. No pretending we are Procore with a haircut.
+
+## Setup
+
+Create a Next app first:
+
+```bash
+npx create-next-app@latest jobblocker --typescript --eslint --app --tailwind --src-dir false --import-alias "@/*"
+cd jobblocker
+```
+
+Install Supabase packages:
+
+```bash
+npm install @supabase/supabase-js @supabase/ssr
+```
+
+Copy the files from this scaffold into the project root.
+
+## Environment
+
+Copy `.env.example` to `.env.local`.
+
+```bash
+cp .env.example .env.local
+```
+
+Add:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_DEMO_COMPANY_ID=your_test_company_uuid
+```
+
+## Important
+
+The schema uses company-owned records. For the first dev pass, create a test company in Supabase and paste that UUID into `NEXT_PUBLIC_DEMO_COMPANY_ID`.
+
+Later, we replace that with real auth/company onboarding.
+
+## Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```txt
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Next build steps
 
-## Learn More
+1. Run `jobblocker_schema_v1.sql` in Supabase.
+2. Insert one test company.
+3. Put that company UUID in `.env.local`.
+4. Run app.
+5. Create a job.
+6. See it appear in Jobs list.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+That is the engine starting.

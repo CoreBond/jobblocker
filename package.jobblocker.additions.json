@@ -1,0 +1,6 @@
+{
+  "dependencies_to_add": {
+    "@supabase/supabase-js": "latest",
+    "@supabase/ssr": "latest"
+  }
+}
