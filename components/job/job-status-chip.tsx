@@ -1,3 +1,5 @@
+import { getStatusLabel } from "@/lib/job-status";
+
 export function JobStatusChip({ status }: { status: string }) {
   const s = status.toLowerCase();
 
@@ -12,7 +14,7 @@ export function JobStatusChip({ status }: { status: string }) {
 
   return (
     <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${tone}`}>
-      {status.replaceAll("_", " ")}
+      {getStatusLabel(status)}
     </span>
   );
 }

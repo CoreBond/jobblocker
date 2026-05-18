@@ -14,37 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { JobStatusChip } from "@/components/job/job-status-chip";
-
-const JOB_STATUSES = [
-  "active",
-  "needs_attention",
-  "waiting_approval",
-  "inspection_phase",
-  "ready_to_move",
-  "ready_to_close",
-  "closed",
-] as const;
-
-const ALLOWED_STATUS_TRANSITIONS: Record<string, string[]> = {
-  active: ["needs_attention", "waiting_approval", "inspection_phase"],
-  needs_attention: ["active", "waiting_approval", "inspection_phase"],
-  waiting_approval: ["active", "inspection_phase"],
-  inspection_phase: ["needs_attention", "ready_to_move"],
-  ready_to_move: ["ready_to_close"],
-  ready_to_close: ["closed"],
-  closed: ["active"],
-};
-
-function getStatusOptions(currentStatus: string) {
-  const allowedNextStatuses = ALLOWED_STATUS_TRANSITIONS[currentStatus] ?? [];
-
-  return [currentStatus, ...allowedNextStatuses].filter(
-    (status, index, statuses) => status && statuses.indexOf(status) === index
-  );
-}
+import { canMoveToStatus, getStatusLabel, getStatusOptions } from "@/lib/job-status";
 
 function formatStatus(status: string) {
-  return status.replaceAll("_", " ");
+  return getStatusLabel(status);
 }
 
 function getSmartNextAction(jobStatus: string, permits: Permit[], inspections: Inspection[]) {
@@ -432,9 +405,7 @@ export default function JobDetailPage() {
   async function handleJobStatusChange(newStatus: string) {
     if (!job || newStatus === job.status) return;
 
-    const allowedNextStatuses = ALLOWED_STATUS_TRANSITIONS[job.status] ?? [];
-
-    if (!allowedNextStatuses.includes(newStatus)) {
+    if (!canMoveToStatus(job.status, newStatus)) {
       setError(`Invalid status move from ${formatStatus(job.status)} to ${formatStatus(newStatus)}.`);
       return;
     }
@@ -718,7 +689,7 @@ export default function JobDetailPage() {
                       >
                         {statusOptions.map((status) => (
                           <option key={status} value={status}>
-                            {status === job.status ? `${formatStatus(status)} (current)` : formatStatus(status)}
+                            {status === job.status ? `${getStatusLabel(status)} (current)` : getStatusLabel(status)}
                           </option>
                         ))}
                       </select>
