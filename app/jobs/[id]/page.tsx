@@ -250,8 +250,13 @@ function SmallLabel({ children }: { children: React.ReactNode }) {
   return <span className="text-sm font-bold text-slate-800">{children}</span>;
 }
 
-function EmptyBox({ children }: { children: React.ReactNode }) {
-  return <div className="rounded-xl border border-dashed bg-slate-50 p-4 text-sm text-slate-600">{children}</div>;
+function EmptyState({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm">
+      <p className="font-black text-slate-800">{title}</p>
+      <p className="mt-1 text-slate-600">{children}</p>
+    </div>
+  );
 }
 
 export default function JobDetailPage() {
@@ -542,7 +547,9 @@ export default function JobDetailPage() {
                         );
                       })
                     ) : (
-                      <EmptyBox>No permits yet. Add one before it lives in somebody’s text thread forever.</EmptyBox>
+                      <EmptyState title="No permits added yet">
+                        Add permits here so numbers, expiration dates, and blockers do not end up scattered across texts and sticky notes.
+                      </EmptyState>
                     )}
                   </div>
                 </CardContent>
@@ -629,7 +636,9 @@ export default function JobDetailPage() {
                         );
                       })
                     ) : (
-                      <EmptyBox>No inspections yet. Add the next one before the job waits on a phone call nobody made.</EmptyBox>
+                      <EmptyState title="No inspections scheduled yet">
+                        Add inspections here so passed, failed, and waiting items stay tied to the job instead of somebody’s memory.
+                      </EmptyState>
                     )}
                   </div>
                 </CardContent>
@@ -666,7 +675,9 @@ export default function JobDetailPage() {
                         </div>
                       ))
                     ) : (
-                      <EmptyBox>No notes yet. Future-you is already disappointed.</EmptyBox>
+                      <EmptyState title="No notes yet">
+                        Add internal notes here so future-you does not have to reconstruct the job from vibes and regret.
+                      </EmptyState>
                     )}
                   </div>
                 </CardContent>
@@ -759,7 +770,9 @@ export default function JobDetailPage() {
                       </div>
                     ))
                   ) : (
-                    <EmptyBox>No activity yet. The app is watching, but nothing has happened.</EmptyBox>
+                    <EmptyState title="No activity recorded yet">
+                      New status changes, permits, inspections, and notes will show up here as the job moves.
+                    </EmptyState>
                   )}
                 </div>
 
@@ -786,6 +799,24 @@ export default function JobDetailPage() {
               </CardContent>
             </Card>
           </div>
+        ) : null}
+
+
+        {!loading && !job ? (
+          <Card>
+            <CardContent className="p-5">
+              <h1 className="text-xl font-black text-slate-950">Job not found</h1>
+              <p className="mt-2 text-sm text-slate-600">
+                This job record could not be loaded. It may have been deleted, moved, or the link is wrong.
+              </p>
+
+              <div className="mt-4">
+                <Button asChild variant="outline">
+                  <Link href="/jobs">Back to Jobs</Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         ) : null}
       </main>
     </div>
