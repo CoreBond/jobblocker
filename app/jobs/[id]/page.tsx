@@ -265,6 +265,7 @@ export default function JobDetailPage() {
   const [activity, setActivity] = useState<ActivityLog[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showFullActivity, setShowFullActivity] = useState(false);
 
   const [permitType, setPermitType] = useState("");
   const [permitNumber, setPermitNumber] = useState("");
@@ -442,7 +443,8 @@ export default function JobDetailPage() {
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
 
-  const recentActivity = sortedActivity.slice(0, 10);
+  const visibleActivity = showFullActivity ? sortedActivity : sortedActivity.slice(0, 10);
+  const hiddenActivityCount = Math.max(sortedActivity.length - visibleActivity.length, 0);
   const statusOptions = job ? getStatusOptions(job.status) : [];
 
   return (
@@ -733,8 +735,8 @@ export default function JobDetailPage() {
                 </div>
 
                 <div className="mt-4 space-y-3">
-                  {recentActivity.length ? (
-                    recentActivity.map((item) => (
+                  {visibleActivity.length ? (
+                    visibleActivity.map((item) => (
                       <div
                         key={item.id}
                         className={`rounded-xl border bg-white p-3 text-sm shadow-sm ${getActivityBorderClass(item.action)}`}
@@ -761,10 +763,25 @@ export default function JobDetailPage() {
                   )}
                 </div>
 
-                {activity.length > recentActivity.length ? (
-                  <p className="mt-3 text-xs text-slate-500">
-                    Showing the 10 most recent events. Full history view can come later if this thing grows teeth.
-                  </p>
+                {sortedActivity.length > 10 ? (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3">
+                    <p className="text-xs font-medium text-slate-500">
+                      {showFullActivity
+                        ? `Showing all ${sortedActivity.length} events.`
+                        : `Showing ${visibleActivity.length} of ${sortedActivity.length} events. ${hiddenActivityCount} older event${
+                            hiddenActivityCount === 1 ? "" : "s"
+                          } hidden.`}
+                    </p>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowFullActivity((current) => !current)}
+                    >
+                      {showFullActivity ? "Show Recent Only" : "Show Full History"}
+                    </Button>
+                  </div>
                 ) : null}
               </CardContent>
             </Card>
