@@ -6,12 +6,9 @@ import type { Job } from "@/types/jobblocker";
 import { fetchJobs } from "@/lib/db/jobs";
 import { AppHeader } from "@/components/layout/app-header";
 import { JobStatusChip } from "@/components/job/job-status-chip";
+import { getStatusLabel } from "@/lib/job-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-
-function formatStatus(status: string) {
-  return status.replaceAll("_", " ");
-}
 
 function getJobCardClass(status: string) {
   if (status === "needs_attention") {
@@ -65,6 +62,29 @@ function getJobStatusMessage(status: string) {
   return "Active job.";
 }
 
+
+const STATUS_PRIORITY: Record<string, number> = {
+  needs_attention: 1,
+  waiting_approval: 2,
+  inspection_phase: 3,
+  active: 4,
+  ready_to_move: 5,
+  ready_to_close: 6,
+  closed: 7,
+};
+
+function sortJobsByPriority(jobs: Job[]) {
+  return [...jobs].sort((a, b) => {
+    const statusDifference = (STATUS_PRIORITY[a.status] ?? 99) - (STATUS_PRIORITY[b.status] ?? 99);
+
+    if (statusDifference !== 0) {
+      return statusDifference;
+    }
+
+    return a.name.localeCompare(b.name);
+  });
+}
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [error, setError] = useState("");
@@ -92,6 +112,7 @@ export default function JobsPage() {
   const attentionJobs = jobs.filter((job) => job.status === "needs_attention").length;
   const inspectionJobs = jobs.filter((job) => job.status === "inspection_phase").length;
   const readyToCloseJobs = jobs.filter((job) => job.status === "ready_to_close").length;
+  const sortedJobs = sortJobsByPriority(jobs);
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -146,7 +167,7 @@ export default function JobsPage() {
         ) : null}
 
         <div className="space-y-3">
-          {jobs.map((job) => (
+          {sortedJobs.map((job) => (
             <Link key={job.id} href={`/jobs/${job.id}`} className="block">
               <Card className={`transition hover:-translate-y-0.5 hover:shadow-md ${getJobCardClass(job.status)}`}>
                 <CardContent className="p-4">
@@ -165,7 +186,7 @@ export default function JobsPage() {
                   </div>
 
                   <p className="mt-3 text-xs font-semibold text-slate-500">
-                    Status: {formatStatus(job.status)}
+                    Status: {getStatusLabel(job.status)}
                   </p>
                 </CardContent>
               </Card>
