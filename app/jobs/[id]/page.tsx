@@ -23,7 +23,25 @@ const JOB_STATUSES = [
   "ready_to_move",
   "ready_to_close",
   "closed",
-];
+] as const;
+
+const ALLOWED_STATUS_TRANSITIONS: Record<string, string[]> = {
+  active: ["needs_attention", "waiting_approval", "inspection_phase"],
+  needs_attention: ["active", "waiting_approval", "inspection_phase"],
+  waiting_approval: ["active", "inspection_phase"],
+  inspection_phase: ["needs_attention", "ready_to_move"],
+  ready_to_move: ["ready_to_close"],
+  ready_to_close: ["closed"],
+  closed: ["active"],
+};
+
+function getStatusOptions(currentStatus: string) {
+  const allowedNextStatuses = ALLOWED_STATUS_TRANSITIONS[currentStatus] ?? [];
+
+  return [currentStatus, ...allowedNextStatuses].filter(
+    (status, index, statuses) => status && statuses.indexOf(status) === index
+  );
+}
 
 function formatStatus(status: string) {
   return status.replaceAll("_", " ");
@@ -187,6 +205,74 @@ function getInspectionStatusMessage(inspection: Inspection) {
   return "";
 }
 
+
+function formatTitle(text: string) {
+  return text
+    .replaceAll("_", " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function getActivityTitle(item: ActivityLog) {
+  if (item.message) {
+    return item.message;
+  }
+
+  return formatTitle(item.action);
+}
+
+function getActivityBadgeClass(action: string) {
+  if (action.includes("status")) {
+    return "bg-blue-100 text-blue-800";
+  }
+
+  if (action.includes("permit")) {
+    return "bg-orange-100 text-orange-800";
+  }
+
+  if (action.includes("inspection")) {
+    return "bg-green-100 text-green-800";
+  }
+
+  if (action.includes("note")) {
+    return "bg-purple-100 text-purple-800";
+  }
+
+  return "bg-slate-200 text-slate-800";
+}
+
+function getActivityBorderClass(action: string) {
+  if (action.includes("status")) {
+    return "border-blue-200";
+  }
+
+  if (action.includes("permit")) {
+    return "border-orange-200";
+  }
+
+  if (action.includes("inspection")) {
+    return "border-green-200";
+  }
+
+  if (action.includes("note")) {
+    return "border-purple-200";
+  }
+
+  return "border-slate-200";
+}
+
 function SmallLabel({ children }: { children: React.ReactNode }) {
   return <span className="text-sm font-bold text-slate-800">{children}</span>;
 }
@@ -346,6 +432,13 @@ export default function JobDetailPage() {
   async function handleJobStatusChange(newStatus: string) {
     if (!job || newStatus === job.status) return;
 
+    const allowedNextStatuses = ALLOWED_STATUS_TRANSITIONS[job.status] ?? [];
+
+    if (!allowedNextStatuses.includes(newStatus)) {
+      setError(`Invalid status move from ${formatStatus(job.status)} to ${formatStatus(newStatus)}.`);
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -373,6 +466,13 @@ export default function JobDetailPage() {
       setSaving(false);
     }
   }
+
+  const sortedActivity = [...activity].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  const recentActivity = sortedActivity.slice(0, 10);
+  const statusOptions = job ? getStatusOptions(job.status) : [];
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -616,12 +716,16 @@ export default function JobDetailPage() {
                         onChange={(event) => handleJobStatusChange(event.target.value)}
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                       >
-                        {JOB_STATUSES.map((status) => (
+                        {statusOptions.map((status) => (
                           <option key={status} value={status}>
-                            {formatStatus(status)}
+                            {status === job.status ? `${formatStatus(status)} (current)` : formatStatus(status)}
                           </option>
                         ))}
                       </select>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+                      Only valid next statuses are shown. This keeps the workflow from wandering into nonsense.
                     </div>
 
                     <div className="rounded-xl bg-slate-50 p-3">
@@ -646,22 +750,51 @@ export default function JobDetailPage() {
 
             <Card>
               <CardContent className="p-4">
-                <h2 className="text-lg font-black text-slate-950">Activity Log</h2>
-                <p className="mt-1 text-sm text-slate-600">Automatic history for this job.</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-950">Activity Timeline</h2>
+                    <p className="mt-1 text-sm text-slate-600">Newest job events first. No mystery meat log soup.</p>
+                  </div>
 
-                <div className="mt-4 space-y-2">
-                  {activity.length ? (
-                    activity.map((item) => (
-                      <div key={item.id} className="rounded-xl bg-slate-50 p-3 text-sm">
-                        <b>{formatStatus(item.action)}</b>
-                        <p className="text-slate-600">{item.message || "No message"}</p>
-                        <p className="text-xs text-slate-500">{new Date(item.created_at).toLocaleString()}</p>
+                  <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
+                    {activity.length} total
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {recentActivity.length ? (
+                    recentActivity.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`rounded-xl border bg-white p-3 text-sm shadow-sm ${getActivityBorderClass(item.action)}`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-black uppercase tracking-wide ${getActivityBadgeClass(
+                              item.action
+                            )}`}
+                          >
+                            {formatTitle(item.action)}
+                          </span>
+
+                          <span className="text-xs font-medium text-slate-500">
+                            {formatDateTime(item.created_at)}
+                          </span>
+                        </div>
+
+                        <p className="mt-2 font-semibold text-slate-900">{getActivityTitle(item)}</p>
                       </div>
                     ))
                   ) : (
                     <EmptyBox>No activity yet. The app is watching, but nothing has happened.</EmptyBox>
                   )}
                 </div>
+
+                {activity.length > recentActivity.length ? (
+                  <p className="mt-3 text-xs text-slate-500">
+                    Showing the 10 most recent events. Full history view can come later if this thing grows teeth.
+                  </p>
+                ) : null}
               </CardContent>
             </Card>
           </div>
