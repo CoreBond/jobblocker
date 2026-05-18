@@ -85,6 +85,20 @@ function sortJobsByPriority(jobs: Job[]) {
   });
 }
 
+const ATTENTION_QUEUE_STATUSES: Job["status"][] = [
+  "needs_attention",
+  "waiting_approval",
+  "inspection_phase",
+];
+
+function buildAttentionQueue(jobs: Job[]) {
+  return ATTENTION_QUEUE_STATUSES.map((status) => ({
+    status,
+    label: getStatusLabel(status),
+    count: jobs.filter((job) => job.status === status).length,
+  }));
+}
+
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [error, setError] = useState("");
@@ -112,6 +126,7 @@ export default function JobsPage() {
   const attentionJobs = jobs.filter((job) => job.status === "needs_attention").length;
   const inspectionJobs = jobs.filter((job) => job.status === "inspection_phase").length;
   const readyToCloseJobs = jobs.filter((job) => job.status === "ready_to_close").length;
+  const attentionQueue = buildAttentionQueue(jobs);
   const sortedJobs = sortJobsByPriority(jobs);
 
   return (
@@ -159,6 +174,35 @@ export default function JobsPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mb-4 border-orange-200 bg-white">
+          <CardContent className="p-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Attention Queue</p>
+                <h2 className="text-lg font-black text-slate-950">What needs eyes first</h2>
+              </div>
+              <p className="text-xs font-semibold text-slate-500">Sorted by urgency below.</p>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {attentionQueue.map((item) => (
+                <div
+                  key={item.status}
+                  className={`rounded-xl border p-3 ${
+                    item.count > 0 ? "border-orange-200 bg-orange-50" : "border-slate-200 bg-slate-50"
+                  }`}
+                >
+                  <p className="text-sm font-black text-slate-950">{item.label}</p>
+                  <p className="mt-1 text-2xl font-black text-slate-950">{item.count}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {item.count === 1 ? "job" : "jobs"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {error ? (
           <Card className="border-red-200 bg-red-50">
