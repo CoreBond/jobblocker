@@ -15,10 +15,81 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { JobStatusChip } from "@/components/job/job-status-chip";
 import { canMoveToStatus, getStatusLabel, getStatusOptions } from "@/lib/job-status";
-import { getSmartNextAction } from "@/lib/job-next-action-rules";
 
 function formatStatus(status: string) {
   return getStatusLabel(status);
+}
+
+function getSmartNextAction(jobStatus: string, permits: Permit[], inspections: Inspection[]) {
+  if (jobStatus === "closed") {
+    return "Job closed";
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const expiredPermit = permits.find((permit) => {
+    if (!permit.expiration_date) return false;
+
+    const expirationDate = new Date(permit.expiration_date);
+    expirationDate.setHours(0, 0, 0, 0);
+
+    return expirationDate < today;
+  });
+
+  if (expiredPermit) {
+    return `Renew or verify expired ${expiredPermit.permit_type}`;
+  }
+
+  const expiresTodayPermit = permits.find((permit) => {
+    if (!permit.expiration_date) return false;
+
+    const expirationDate = new Date(permit.expiration_date);
+    expirationDate.setHours(0, 0, 0, 0);
+
+    return expirationDate.getTime() === today.getTime();
+  });
+
+  if (expiresTodayPermit) {
+    return `Verify ${expiresTodayPermit.permit_type} expires today`;
+  }
+
+  const neededPermit = permits.find((permit) => permit.status === "needed");
+
+  if (neededPermit) {
+    return `Submit ${neededPermit.permit_type}`;
+  }
+
+  const failedInspection = inspections.find((inspection) => inspection.status === "failed");
+
+  if (failedInspection) {
+    return `Schedule reinspection for ${failedInspection.inspection_type}`;
+  }
+
+  const neededInspection = inspections.find((inspection) => inspection.status === "needed");
+
+  if (neededInspection) {
+    return `Schedule ${neededInspection.inspection_type}`;
+  }
+
+  const scheduledInspection = inspections.find((inspection) => inspection.status === "scheduled");
+
+  if (scheduledInspection) {
+    return `Await ${scheduledInspection.inspection_type}`;
+  }
+
+  const allInspectionsPassed =
+    inspections.length > 0 && inspections.every((inspection) => inspection.status === "passed");
+
+  if (allInspectionsPassed) {
+    return "Ready for next phase";
+  }
+
+  if (jobStatus === "ready_to_close") {
+    return "Close job";
+  }
+
+  return "Review job status";
 }
 
 function getPermitUrgency(permit: Permit) {
@@ -127,71 +198,12 @@ function formatDateTime(value: string) {
   });
 }
 
-function cleanActivityText(text: string) {
-  const statusLabels: Record<string, string> = {
-    active: "Active",
-    "needs_attention": "Needs Attention",
-    "needs attention": "Needs Attention",
-    "waiting_approval": "Waiting Approval",
-    "waiting approval": "Waiting Approval",
-    "inspection_phase": "Inspection Phase",
-    "inspection phase": "Inspection Phase",
-    "ready_to_move": "Ready to Move",
-    "ready to move": "Ready to Move",
-    "ready_to_close": "Ready to Close",
-    "ready to close": "Ready to Close",
-    closed: "Closed",
-  };
-
-  return text.replace(/\b(active|needs_attention|needs attention|waiting_approval|waiting approval|inspection_phase|inspection phase|ready_to_move|ready to move|ready_to_close|ready to close|closed)\b/gi, (status) => statusLabels[status.toLowerCase()] ?? status);
-}
-
 function getActivityTitle(item: ActivityLog) {
   if (item.message) {
-    return cleanActivityText(item.message);
+    return item.message;
   }
 
   return formatTitle(item.action);
-}
-
-function getActivityBadgeLabel(action: string) {
-  if (action.includes("status")) {
-    return "Status";
-  }
-
-  if (action.includes("permit")) {
-    return "Permit";
-  }
-
-  if (action.includes("inspection")) {
-    return "Inspection";
-  }
-
-  if (action.includes("note")) {
-    return "Note";
-  }
-
-  return "Activity";
-}
-
-function getActivitySummary(action: string) {
-  if (action.includes("status")) {
-    return "Job status updated.";
-  }
-
-  if (action.includes("permit")) {
-    return "Permit record changed.";
-  }
-
-  if (action.includes("inspection")) {
-    return "Inspection record changed.";
-  }
-
-  if (action.includes("note")) {
-    return "Job note added.";
-  }
-
-  return "Job activity recorded.";
 }
 
 function getActivityBadgeClass(action: string) {
@@ -470,80 +482,13 @@ export default function JobDetailPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h1 className="text-2xl font-black text-slate-950">{job.name}</h1>
-                    <p className="mt-1 text-sm font-semibold text-slate-700">
-                      Customer: {job.customer_name || "Not set"}
-                    </p>
                     <p className="mt-1 text-sm text-slate-600">{job.job_type || "No job type set"}</p>
                   </div>
                   <JobStatusChip status={job.status} />
                 </div>
 
-                <div className="mt-4 inline-flex max-w-full flex-wrap items-center gap-2 rounded-full bg-orange-50 px-3 py-2 text-sm text-slate-800">
-                  <span className="text-xs font-black uppercase tracking-wide text-orange-700">
-                    Next action
-                  </span>
-                  <span className="font-semibold">{getSmartNextAction(job.status, permits, inspections)}</span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1">
-                    Permits: {permits.length}
-                  </span>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1">
-                    Inspections: {inspections.length}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <h2 className="text-lg font-black text-slate-950">Job Record</h2>
-
-                <div className="mt-3 grid gap-2 text-sm text-slate-700">
-                  <div className="rounded-xl bg-slate-50 p-3">
-                    <b>Customer:</b> {job.customer_name || "Not set"}
-                  </div>
-
-                  <div className="rounded-xl bg-slate-50 p-3">
-                    <b>Job type:</b> {job.job_type || "No job type set"}
-                  </div>
-
-                  <div className="rounded-xl bg-slate-50 p-3">
-                    <label className="mb-1 block font-bold">Status:</label>
-                    <select
-                      value={job.status}
-                      disabled={saving}
-                      onChange={(event) => handleJobStatusChange(event.target.value)}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                    >
-                      {statusOptions.map((status) => (
-                        <option key={status} value={status}>
-                          {status === job.status ? `${getStatusLabel(status)} (current)` : getStatusLabel(status)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-                    Only valid next statuses are shown. This keeps the workflow from wandering into nonsense.
-                  </div>
-
-                  <div className="rounded-xl bg-slate-50 p-3">
-                    <b>Permits:</b> {permits.length}
-                  </div>
-
-                  <div className="rounded-xl bg-slate-50 p-3">
-                    <b>Inspections:</b> {inspections.length}
-                  </div>
-
-                  <div className="rounded-xl bg-slate-50 p-3">
-                    <b>Notes:</b> {notes.length}
-                  </div>
-
-                  <div className="rounded-xl bg-slate-50 p-3">
-                    <b>Activity events:</b> {activity.length}
-                  </div>
+                <div className="mt-4 rounded-xl bg-orange-50 p-4 text-sm text-slate-800">
+                  <b>Next action:</b> {getSmartNextAction(job.status, permits, inspections)}
                 </div>
               </CardContent>
             </Card>
@@ -700,42 +645,94 @@ export default function JobDetailPage() {
               </Card>
             </div>
 
-            <Card>
-              <CardContent className="p-4">
-                <h2 className="text-lg font-black text-slate-950">Notes</h2>
-                <p className="mt-1 text-sm text-slate-600">Internal job notes. Customer-safe visibility comes later.</p>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card>
+                <CardContent className="p-4">
+                  <h2 className="text-lg font-black text-slate-950">Notes</h2>
+                  <p className="mt-1 text-sm text-slate-600">Internal job notes. Customer-safe visibility comes later.</p>
 
-                <form onSubmit={handleAddNote} className="mt-4 space-y-3">
-                  <textarea
-                    value={noteText}
-                    onChange={(event) => setNoteText(event.target.value)}
-                    className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-orange-500"
-                    placeholder="Called permit office. Waiting on review."
-                  />
+                  <form onSubmit={handleAddNote} className="mt-4 space-y-3">
+                    <textarea
+                      value={noteText}
+                      onChange={(event) => setNoteText(event.target.value)}
+                      className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-orange-500"
+                      placeholder="Called permit office. Waiting on review."
+                    />
 
-                  <Button type="submit" disabled={saving || !noteText.trim()} className="bg-slate-950">
-                    Add Note
-                  </Button>
-                </form>
+                    <Button type="submit" disabled={saving || !noteText.trim()} className="bg-slate-950">
+                      Add Note
+                    </Button>
+                  </form>
 
-                <div className="mt-4 space-y-2">
-                  {notes.length ? (
-                    notes.map((note) => (
-                      <div key={note.id} className="rounded-xl bg-slate-50 p-3 text-sm">
-                        <p>{note.note}</p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {note.visibility} · {new Date(note.created_at).toLocaleString()}
-                        </p>
+                  <div className="mt-4 space-y-2">
+                    {notes.length ? (
+                      notes.map((note) => (
+                        <div key={note.id} className="rounded-xl bg-slate-50 p-3 text-sm">
+                          <p>{note.note}</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {note.visibility} · {new Date(note.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <EmptyState title="No notes yet">
+                        Add internal notes here so future-you does not have to reconstruct the job from vibes and regret.
+                      </EmptyState>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <h2 className="text-lg font-black text-slate-950">Job Record</h2>
+
+                  <div className="mt-3 grid gap-2 text-sm text-slate-700">
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <b>Customer:</b> {job.customer_name || "Not set"}
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <label className="mb-1 block font-bold">Status:</label>
+                      <select
+                        value={job.status}
+                        disabled={saving}
+                        onChange={(event) => handleJobStatusChange(event.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                      >
+                        {statusOptions.map((status) => (
+                          <option key={status} value={status}>
+                            {status === job.status ? `${getStatusLabel(status)} (current)` : getStatusLabel(status)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+                      Only valid next statuses are shown. This keeps the workflow from wandering into nonsense.
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <b>Permits:</b> {permits.length}
                       </div>
-                    ))
-                  ) : (
-                    <EmptyState title="No notes yet">
-                      Add internal notes here so future-you does not have to reconstruct the job from vibes and regret.
-                    </EmptyState>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <b>Inspections:</b> {inspections.length}
+                      </div>
+
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <b>Notes:</b> {notes.length}
+                      </div>
+
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <b>Activity events:</b> {activity.length}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             <Card>
               <CardContent className="p-4">
@@ -752,7 +749,7 @@ export default function JobDetailPage() {
 
                 <div className="mt-4 space-y-3">
                   {visibleActivity.length ? (
-                    visibleActivity.map((item, index) => (
+                    visibleActivity.map((item) => (
                       <div
                         key={item.id}
                         className={`rounded-xl border bg-white p-3 text-sm shadow-sm ${getActivityBorderClass(item.action)}`}
@@ -763,26 +760,15 @@ export default function JobDetailPage() {
                               item.action
                             )}`}
                           >
-                            {getActivityBadgeLabel(item.action)}
+                            {formatTitle(item.action)}
                           </span>
 
-                          <div className="flex flex-wrap items-center gap-2">
-                            {index === 0 ? (
-                              <span className="rounded-full bg-slate-950 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-white">
-                                Latest
-                              </span>
-                            ) : null}
-
-                            <span className="text-xs font-medium text-slate-500">
-                              {formatDateTime(item.created_at)}
-                            </span>
-                          </div>
+                          <span className="text-xs font-medium text-slate-500">
+                            {formatDateTime(item.created_at)}
+                          </span>
                         </div>
 
                         <p className="mt-2 font-semibold text-slate-900">{getActivityTitle(item)}</p>
-                        <p className="mt-1 text-xs font-medium text-slate-500">
-                          {getActivitySummary(item.action)}
-                        </p>
                       </div>
                     ))
                   ) : (
