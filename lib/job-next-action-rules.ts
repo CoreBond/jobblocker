@@ -65,6 +65,22 @@ export function getSmartNextAction(jobStatus: string, permits: Permit[], inspect
     return "Ready for next phase";
   }
 
+  if (jobStatus === "needs_attention") {
+    return "Resolve blocker";
+  }
+
+  if (jobStatus === "waiting_approval") {
+    return "Follow up on approval";
+  }
+
+  if (jobStatus === "inspection_phase") {
+    return "Review inspection status";
+  }
+
+  if (jobStatus === "ready_to_move") {
+    return "Move to next field step";
+  }
+
   if (jobStatus === "ready_to_close") {
     return "Close job";
   }
