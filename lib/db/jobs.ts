@@ -36,6 +36,7 @@ export async function fetchJobById(jobId: string): Promise<Job | null> {
 
 export async function createJob(input: NewJobInput): Promise<Job> {
   const supabase = createClient();
+  const nextAction = input.next_action?.trim() || "Review job status";
 
   const { data, error } = await supabase
     .from("jobs")
@@ -43,7 +44,7 @@ export async function createJob(input: NewJobInput): Promise<Job> {
       company_id: input.company_id,
       name: input.name,
       job_type: input.job_type || null,
-      next_action: input.next_action || null,
+      next_action: nextAction,
       status: "active",
     })
     .select("*")
