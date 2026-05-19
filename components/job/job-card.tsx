@@ -11,15 +11,18 @@ export function JobCard({ job }: { job: Job }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h3 className="font-black text-slate-950">{job.name}</h3>
-            <p className="text-sm text-slate-600">
-              {job.job_type || "Job"} · {job.customer_name || "No customer set"}
+            <p className="mt-1 text-sm font-semibold text-slate-700">
+              Customer: {job.customer_name || "No customer set"}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {job.job_type || "No job type set"}
             </p>
           </div>
           <JobStatusChip status={job.status} />
         </div>
 
         <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">
-          <b>Next action:</b> {job.next_action || "No next action set"}
+          <b>Next action:</b> {job.next_action || "Open job to review blockers"}
         </div>
 
         <div className="mt-3">
