@@ -198,12 +198,71 @@ function formatDateTime(value: string) {
   });
 }
 
+function cleanActivityText(text: string) {
+  const statusLabels: Record<string, string> = {
+    active: "Active",
+    "needs_attention": "Needs Attention",
+    "needs attention": "Needs Attention",
+    "waiting_approval": "Waiting Approval",
+    "waiting approval": "Waiting Approval",
+    "inspection_phase": "Inspection Phase",
+    "inspection phase": "Inspection Phase",
+    "ready_to_move": "Ready to Move",
+    "ready to move": "Ready to Move",
+    "ready_to_close": "Ready to Close",
+    "ready to close": "Ready to Close",
+    closed: "Closed",
+  };
+
+  return text.replace(/\b(active|needs_attention|needs attention|waiting_approval|waiting approval|inspection_phase|inspection phase|ready_to_move|ready to move|ready_to_close|ready to close|closed)\b/gi, (status) => statusLabels[status.toLowerCase()] ?? status);
+}
+
 function getActivityTitle(item: ActivityLog) {
   if (item.message) {
-    return item.message;
+    return cleanActivityText(item.message);
   }
 
   return formatTitle(item.action);
+}
+
+function getActivityBadgeLabel(action: string) {
+  if (action.includes("status")) {
+    return "Status";
+  }
+
+  if (action.includes("permit")) {
+    return "Permit";
+  }
+
+  if (action.includes("inspection")) {
+    return "Inspection";
+  }
+
+  if (action.includes("note")) {
+    return "Note";
+  }
+
+  return "Activity";
+}
+
+function getActivitySummary(action: string) {
+  if (action.includes("status")) {
+    return "Job status updated.";
+  }
+
+  if (action.includes("permit")) {
+    return "Permit record changed.";
+  }
+
+  if (action.includes("inspection")) {
+    return "Inspection record changed.";
+  }
+
+  if (action.includes("note")) {
+    return "Job note added.";
+  }
+
+  return "Job activity recorded.";
 }
 
 function getActivityBadgeClass(action: string) {
@@ -747,7 +806,7 @@ export default function JobDetailPage() {
 
                 <div className="mt-4 space-y-3">
                   {visibleActivity.length ? (
-                    visibleActivity.map((item) => (
+                    visibleActivity.map((item, index) => (
                       <div
                         key={item.id}
                         className={`rounded-xl border bg-white p-3 text-sm shadow-sm ${getActivityBorderClass(item.action)}`}
@@ -758,15 +817,26 @@ export default function JobDetailPage() {
                               item.action
                             )}`}
                           >
-                            {formatTitle(item.action)}
+                            {getActivityBadgeLabel(item.action)}
                           </span>
 
-                          <span className="text-xs font-medium text-slate-500">
-                            {formatDateTime(item.created_at)}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {index === 0 ? (
+                              <span className="rounded-full bg-slate-950 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-white">
+                                Latest
+                              </span>
+                            ) : null}
+
+                            <span className="text-xs font-medium text-slate-500">
+                              {formatDateTime(item.created_at)}
+                            </span>
+                          </div>
                         </div>
 
                         <p className="mt-2 font-semibold text-slate-900">{getActivityTitle(item)}</p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">
+                          {getActivitySummary(item.action)}
+                        </p>
                       </div>
                     ))
                   ) : (
