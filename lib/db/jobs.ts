@@ -44,6 +44,7 @@ export async function createJob(input: NewJobInput): Promise<Job> {
       company_id: input.company_id,
       name: input.name,
       job_type: input.job_type || null,
+      customer_name: input.customer_name?.trim() || null,
       next_action: nextAction,
       status: "active",
     })

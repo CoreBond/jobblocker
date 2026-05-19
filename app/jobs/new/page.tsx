@@ -14,6 +14,7 @@ export default function NewJobPage() {
 
   const [name, setName] = useState("");
   const [jobType, setJobType] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [nextAction, setNextAction] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -38,6 +39,7 @@ export default function NewJobPage() {
         company_id: companyId,
         name: name.trim(),
         job_type: jobType.trim(),
+        customer_name: customerName.trim(),
         next_action: nextAction.trim(),
       });
 
@@ -68,6 +70,11 @@ export default function NewJobPage() {
               <label className="block">
                 <span className="text-sm font-bold text-slate-800">Job type</span>
                 <Input value={jobType} onChange={(event) => setJobType(event.target.value)} placeholder="Bathroom Remodel" />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Customer name</span>
+                <Input value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Jordan Smith" />
               </label>
 
               <label className="block">

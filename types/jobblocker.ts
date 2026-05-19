@@ -29,6 +29,7 @@ export type NewJobInput = {
   company_id: string;
   name: string;
   job_type?: string;
+  customer_name?: string;
   next_action?: string;
 };
 
