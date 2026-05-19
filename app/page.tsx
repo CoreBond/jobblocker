@@ -124,8 +124,11 @@ function DashboardJobCard({ job }: { job: Job }) {
             <JobStatusChip status={job.status} />
           </div>
 
-          <div className="mt-4 rounded-xl bg-white/70 p-3 text-sm text-slate-800">
-            <b>Next action:</b> {job.next_action || "Open job to review blockers"}
+          <div className="mt-4 inline-flex max-w-full flex-wrap items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-sm text-slate-800">
+            <span className="text-xs font-black uppercase tracking-wide text-slate-500">
+              Next action
+            </span>
+            <span className="font-semibold">{job.next_action || "Open job to review blockers"}</span>
           </div>
 
           <p className="mt-3 text-xs font-semibold text-slate-500">Status: {formatStatus(job.status)}</p>
