@@ -115,8 +115,11 @@ function DashboardJobCard({ job }: { job: Job }) {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h3 className="text-lg font-black text-slate-950">{job.name}</h3>
+              <p className="mt-1 text-sm font-semibold text-slate-700">
+                Customer: {job.customer_name || "No customer set"}
+              </p>
               <p className="mt-1 text-sm text-slate-600">
-                {job.job_type || "No job type set"} · {job.customer_name || "No customer set"}
+                {job.job_type || "No job type set"}
               </p>
               <p className="mt-2 text-sm font-semibold text-slate-800">{getStatusMessage(job.status)}</p>
             </div>

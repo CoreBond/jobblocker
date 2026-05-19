@@ -218,7 +218,12 @@ export default function JobsPage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <h2 className="text-lg font-black text-slate-950">{job.name}</h2>
-                      <p className="mt-1 text-sm text-slate-600">{job.job_type || "No job type set"}</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-700">
+                        Customer: {job.customer_name || "No customer set"}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {job.job_type || "No job type set"}
+                      </p>
                       <p className="mt-2 text-sm font-semibold text-slate-800">{getJobStatusMessage(job.status)}</p>
                     </div>
 

@@ -69,6 +69,8 @@ export async function PATCH(
       );
     }
 
+    await updateStoredNextActionForJob(supabase, id);
+
     const { error: activityError } = await supabase
       .from("activity_log")
       .insert({
@@ -86,8 +88,6 @@ export async function PATCH(
         { status: 500 }
       );
     }
-
-    await updateStoredNextActionForJob(supabase, id);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
