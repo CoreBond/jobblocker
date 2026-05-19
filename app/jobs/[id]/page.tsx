@@ -789,7 +789,7 @@ export default function JobDetailPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
+                      className="px-3 py-1.5 text-xs"
                       onClick={() => setShowFullActivity((current) => !current)}
                     >
                       {showFullActivity ? "Show Recent Only" : "Show Full History"}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { updateStoredNextActionForJob } from "@/lib/job-next-action";
+import { canMoveToStatus } from "@/lib/job-status";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -24,7 +25,6 @@ export async function PATCH(
     const body = await request.json();
 
     const newStatus = body.status;
-    const oldStatus = body.oldStatus;
 
     if (!id || !newStatus) {
       return NextResponse.json(
@@ -43,6 +43,17 @@ export async function PATCH(
       return NextResponse.json(
         { error: fetchError.message },
         { status: 500 }
+      );
+    }
+
+    const currentStatus = existingJob.status;
+
+    if (newStatus !== currentStatus && !canMoveToStatus(currentStatus, newStatus)) {
+      return NextResponse.json(
+        {
+          error: `Invalid status move from ${formatStatus(currentStatus)} to ${formatStatus(newStatus)}.`,
+        },
+        { status: 400 }
       );
     }
 
@@ -66,7 +77,7 @@ export async function PATCH(
         action: "job_status_changed",
         entity_type: "job",
         entity_id: id,
-        message: `Job status changed from ${formatStatus(oldStatus || existingJob.status || "unknown")} to ${formatStatus(newStatus)}`,
+        message: `Job status changed from ${formatStatus(currentStatus || "unknown")} to ${formatStatus(newStatus)}`,
       });
 
     if (activityError) {
