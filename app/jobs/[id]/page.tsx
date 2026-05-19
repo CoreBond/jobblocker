@@ -470,10 +470,10 @@ export default function JobDetailPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <h1 className="text-2xl font-black text-slate-950">{job.name}</h1>
-                    <p className="mt-1 text-sm text-slate-600">{job.job_type || "No job type set"}</p>
-                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                    <p className="mt-1 text-sm font-semibold text-slate-700">
                       Customer: {job.customer_name || "Not set"}
                     </p>
+                    <p className="mt-1 text-sm text-slate-600">{job.job_type || "No job type set"}</p>
                   </div>
                   <JobStatusChip status={job.status} />
                 </div>
