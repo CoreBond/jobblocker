@@ -68,13 +68,13 @@ export default function NewJobPage() {
               </label>
 
               <label className="block">
-                <span className="text-sm font-bold text-slate-800">Job type</span>
-                <Input value={jobType} onChange={(event) => setJobType(event.target.value)} placeholder="Bathroom Remodel" />
+                <span className="text-sm font-bold text-slate-800">Customer name</span>
+                <Input value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Jordan Smith" />
               </label>
 
               <label className="block">
-                <span className="text-sm font-bold text-slate-800">Customer name</span>
-                <Input value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="Jordan Smith" />
+                <span className="text-sm font-bold text-slate-800">Job type</span>
+                <Input value={jobType} onChange={(event) => setJobType(event.target.value)} placeholder="Bathroom Remodel" />
               </label>
 
               <label className="block">
