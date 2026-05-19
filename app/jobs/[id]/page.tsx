@@ -496,6 +496,58 @@ export default function JobDetailPage() {
               </CardContent>
             </Card>
 
+            <Card>
+              <CardContent className="p-4">
+                <h2 className="text-lg font-black text-slate-950">Job Record</h2>
+
+                <div className="mt-3 grid gap-2 text-sm text-slate-700">
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <b>Customer:</b> {job.customer_name || "Not set"}
+                  </div>
+
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <b>Job type:</b> {job.job_type || "No job type set"}
+                  </div>
+
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <label className="mb-1 block font-bold">Status:</label>
+                    <select
+                      value={job.status}
+                      disabled={saving}
+                      onChange={(event) => handleJobStatusChange(event.target.value)}
+                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                    >
+                      {statusOptions.map((status) => (
+                        <option key={status} value={status}>
+                          {status === job.status ? `${getStatusLabel(status)} (current)` : getStatusLabel(status)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+                    Only valid next statuses are shown. This keeps the workflow from wandering into nonsense.
+                  </div>
+
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <b>Permits:</b> {permits.length}
+                  </div>
+
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <b>Inspections:</b> {inspections.length}
+                  </div>
+
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <b>Notes:</b> {notes.length}
+                  </div>
+
+                  <div className="rounded-xl bg-slate-50 p-3">
+                    <b>Activity events:</b> {activity.length}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <div className="grid gap-4 lg:grid-cols-2">
               <Card>
                 <CardContent className="p-4">
@@ -648,92 +700,42 @@ export default function JobDetailPage() {
               </Card>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-2">
-              <Card>
-                <CardContent className="p-4">
-                  <h2 className="text-lg font-black text-slate-950">Notes</h2>
-                  <p className="mt-1 text-sm text-slate-600">Internal job notes. Customer-safe visibility comes later.</p>
+            <Card>
+              <CardContent className="p-4">
+                <h2 className="text-lg font-black text-slate-950">Notes</h2>
+                <p className="mt-1 text-sm text-slate-600">Internal job notes. Customer-safe visibility comes later.</p>
 
-                  <form onSubmit={handleAddNote} className="mt-4 space-y-3">
-                    <textarea
-                      value={noteText}
-                      onChange={(event) => setNoteText(event.target.value)}
-                      className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-orange-500"
-                      placeholder="Called permit office. Waiting on review."
-                    />
+                <form onSubmit={handleAddNote} className="mt-4 space-y-3">
+                  <textarea
+                    value={noteText}
+                    onChange={(event) => setNoteText(event.target.value)}
+                    className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-orange-500"
+                    placeholder="Called permit office. Waiting on review."
+                  />
 
-                    <Button type="submit" disabled={saving || !noteText.trim()} className="bg-slate-950">
-                      Add Note
-                    </Button>
-                  </form>
+                  <Button type="submit" disabled={saving || !noteText.trim()} className="bg-slate-950">
+                    Add Note
+                  </Button>
+                </form>
 
-                  <div className="mt-4 space-y-2">
-                    {notes.length ? (
-                      notes.map((note) => (
-                        <div key={note.id} className="rounded-xl bg-slate-50 p-3 text-sm">
-                          <p>{note.note}</p>
-                          <p className="mt-1 text-xs text-slate-500">
-                            {note.visibility} · {new Date(note.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <EmptyState title="No notes yet">
-                        Add internal notes here so future-you does not have to reconstruct the job from vibes and regret.
-                      </EmptyState>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-4">
-                  <h2 className="text-lg font-black text-slate-950">Job Record</h2>
-
-                  <div className="mt-3 grid gap-2 text-sm text-slate-700">
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <b>Customer:</b> {job.customer_name || "Not set"}
-                    </div>
-
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <label className="mb-1 block font-bold">Status:</label>
-                      <select
-                        value={job.status}
-                        disabled={saving}
-                        onChange={(event) => handleJobStatusChange(event.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                      >
-                        {statusOptions.map((status) => (
-                          <option key={status} value={status}>
-                            {status === job.status ? `${getStatusLabel(status)} (current)` : getStatusLabel(status)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
-                      Only valid next statuses are shown. This keeps the workflow from wandering into nonsense.
-                    </div>
-
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <b>Permits:</b> {permits.length}
-                    </div>
-
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <b>Inspections:</b> {inspections.length}
-                    </div>
-
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <b>Notes:</b> {notes.length}
-                    </div>
-
-                    <div className="rounded-xl bg-slate-50 p-3">
-                      <b>Activity events:</b> {activity.length}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                <div className="mt-4 space-y-2">
+                  {notes.length ? (
+                    notes.map((note) => (
+                      <div key={note.id} className="rounded-xl bg-slate-50 p-3 text-sm">
+                        <p>{note.note}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {note.visibility} · {new Date(note.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <EmptyState title="No notes yet">
+                      Add internal notes here so future-you does not have to reconstruct the job from vibes and regret.
+                    </EmptyState>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             <Card>
               <CardContent className="p-4">
