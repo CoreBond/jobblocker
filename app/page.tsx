@@ -47,7 +47,7 @@ function getStatusMessage(status: string) {
   }
 
   if (status === "waiting_approval") {
-    return "Waiting on approval, paperwork, or somebody else’s timeline.";
+    return "Waiting on approval, paperwork, or somebody else's timeline.";
   }
 
   if (status === "inspection_phase") {
@@ -109,7 +109,7 @@ function EmptySection({ message }: { message: string }) {
 
 function DashboardJobCard({ job }: { job: Job }) {
   return (
-    <Link href={`/jobs/${job.id}`} className="block">
+    <Link href={`/jobs/${job.id}`} aria-label={`Open job ${job.name}`} className="block">
       <Card className={`transition hover:-translate-y-0.5 hover:shadow-md ${getStatusCardClass(job.status)}`}>
         <CardContent className="p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -197,7 +197,7 @@ export default function DashboardPage() {
         <div className="mb-5 flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-bold text-orange-700">Dashboard</p>
-            <h1 className="text-3xl font-black text-slate-950">Today’s Job Flow</h1>
+            <h1 className="text-3xl font-black text-slate-950">Today&apos;s Job Flow</h1>
             <p className="mt-1 text-sm text-slate-600">
               What is blocked, waiting, coming up, and ready to move.
             </p>
@@ -325,3 +325,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

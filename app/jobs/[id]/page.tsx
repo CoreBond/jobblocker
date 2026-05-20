@@ -133,7 +133,7 @@ function getPermitUrgencyMessage(permit: Permit, urgency: string) {
   }
 
   if (urgency === "today") {
-    return `${permit.permit_type} expires today. Do not let this become tomorrow’s problem.`;
+    return `${permit.permit_type} expires today. Do not let this become tomorrow's problem.`;
   }
 
   return "";
@@ -593,7 +593,7 @@ export default function JobDetailPage() {
                             <b>{permit.permit_type}</b>
 
                             <p className="text-slate-600">
-                              {permit.permit_number || "No permit number"} · {formatStatus(permit.status)}
+                              {permit.permit_number || "No permit number"}  |  {formatStatus(permit.status)}
                             </p>
 
                             <p className="text-xs text-slate-500">
@@ -658,11 +658,11 @@ export default function JobDetailPage() {
                             <b>{inspection.inspection_type}</b>
 
                             <p className="text-slate-600">
-                              {inspection.scheduled_date || "No date"} · {inspection.time_window || "No window"}
+                              {inspection.scheduled_date || "No date"}  |  {inspection.time_window || "No window"}
                             </p>
 
                             <p className="text-xs text-slate-500">
-                              Inspector: {inspection.inspector_name || "Not set"} · Status: {formatStatus(inspection.status)}
+                              Inspector: {inspection.inspector_name || "Not set"}  |  Status: {formatStatus(inspection.status)}
                             </p>
 
                             {inspectionMessage ? (
@@ -699,7 +699,7 @@ export default function JobDetailPage() {
                       })
                     ) : (
                       <EmptyState title="No inspections scheduled yet">
-                        Add inspections here so passed, failed, and waiting items stay tied to the job instead of somebody’s memory.
+                        Add inspections here so passed, failed, and waiting items stay tied to the job instead of somebody&apos;s memory.
                       </EmptyState>
                     )}
                   </div>
@@ -714,7 +714,11 @@ export default function JobDetailPage() {
                   <p className="mt-1 text-sm text-slate-600">Internal job notes. Customer-safe visibility comes later.</p>
 
                   <form onSubmit={handleAddNote} className="mt-4 space-y-3">
+                    <label className="block text-sm font-bold text-slate-800" htmlFor="job-note-input">
+                      Note
+                    </label>
                     <textarea
+                      id="job-note-input"
                       value={noteText}
                       onChange={(event) => setNoteText(event.target.value)}
                       className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-orange-500"
@@ -732,7 +736,7 @@ export default function JobDetailPage() {
                         <div key={note.id} className="rounded-xl bg-slate-50 p-3 text-sm">
                           <p>{note.note}</p>
                           <p className="mt-1 text-xs text-slate-500">
-                            {note.visibility} · {new Date(note.created_at).toLocaleString()}
+                            {note.visibility}  |  {new Date(note.created_at).toLocaleString()}
                           </p>
                         </div>
                       ))
@@ -886,3 +890,4 @@ export default function JobDetailPage() {
     </div>
   );
 }
+
