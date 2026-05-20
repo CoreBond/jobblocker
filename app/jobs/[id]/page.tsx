@@ -810,6 +810,22 @@ export default function JobDetailPage() {
               </Card>
             </div>
 
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="p-4">
+                <h2 className="text-lg font-black text-red-900">Danger Zone</h2>
+                <p className="mt-1 text-sm text-red-800">
+                  Demo mode is read-only. Request access to archive or delete jobs.
+                </p>
+                <Button
+                  type="button"
+                  disabled
+                  className="mt-4 bg-red-700 text-white hover:bg-red-700"
+                >
+                  Archive job
+                </Button>
+              </CardContent>
+            </Card>
+
             <div className="grid gap-4 lg:grid-cols-2">
               <Card>
                 <CardContent className="p-4">
