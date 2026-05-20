@@ -173,14 +173,26 @@ export default function DashboardPage() {
   }, [companyId]);
 
   const stats = useMemo(() => {
-    const needsAttention = jobs.filter((job) => job.status === "needs_attention").length;
+    const totalJobs = jobs.length;
     const waitingApproval = jobs.filter((job) => job.status === "waiting_approval").length;
     const inspectionPhase = jobs.filter((job) => job.status === "inspection_phase").length;
     const readyToMove = jobs.filter((job) => job.status === "ready_to_move").length;
     const readyToClose = jobs.filter((job) => job.status === "ready_to_close").length;
-    const active = jobs.filter((job) => job.status !== "closed").length;
 
-    return { needsAttention, waitingApproval, inspectionPhase, readyToMove, readyToClose, active };
+    return { totalJobs, waitingApproval, inspectionPhase, readyToMove, readyToClose };
+  }, [jobs]);
+
+  const lastUpdatedLabel = useMemo(() => {
+    if (!jobs.length) {
+      return new Date().toLocaleString();
+    }
+
+    const latestUpdatedAt = jobs
+      .map((job) => job.updated_at)
+      .filter(Boolean)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
+
+    return latestUpdatedAt ? new Date(latestUpdatedAt).toLocaleString() : new Date().toLocaleString();
   }, [jobs]);
 
   const needsAttentionJobs = jobs.filter((job) => job.status === "needs_attention");
@@ -225,9 +237,20 @@ export default function DashboardPage() {
 
         {!loading && !error ? (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-              <StatCard label="Active Jobs" value={stats.active} />
-              <StatCard label="Needs Attention" value={stats.needsAttention} tone={stats.needsAttention > 0 ? "red" : "default"} />
+            <Card>
+              <CardContent className="p-4">
+                <p className="text-sm font-bold text-slate-800">
+                  JobBlocker helps small contractors see what is blocked, what is waiting, what is coming up, and what is ready to move.
+                </p>
+                <p className="mt-2 text-sm text-slate-600">
+                  Track jobs, permits, inspections, notes, and next actions without turning your business into a software project.
+                </p>
+                <p className="mt-3 text-xs font-semibold text-slate-500">Last updated: {lastUpdatedLabel}</p>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+              <StatCard label="Total Jobs" value={stats.totalJobs} />
               <StatCard label="Waiting Approval" value={stats.waitingApproval} tone={stats.waitingApproval > 0 ? "orange" : "default"} />
               <StatCard label="Inspection Phase" value={stats.inspectionPhase} tone={stats.inspectionPhase > 0 ? "blue" : "default"} />
               <StatCard label="Ready to Move" value={stats.readyToMove} tone={stats.readyToMove > 0 ? "green" : "default"} />
@@ -324,6 +347,11 @@ export default function DashboardPage() {
                 )}
               </div>
             </section>
+
+            <footer className="border-t border-slate-200 pt-4 text-xs text-slate-500">
+              <p>JobBlocker™ © 2026. All rights reserved.</p>
+              <p className="mt-1">Demo Mode - sample data only.</p>
+            </footer>
           </div>
         ) : null}
       </main>
