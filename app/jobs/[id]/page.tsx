@@ -262,6 +262,7 @@ function EmptyState({ title, children }: { title: string; children: React.ReactN
 export default function JobDetailPage() {
   const params = useParams<{ id: string }>();
   const jobId = params.id;
+  const companyId = process.env.NEXT_PUBLIC_DEMO_COMPANY_ID;
 
   const [job, setJob] = useState<Job | null>(null);
   const [permits, setPermits] = useState<Permit[]>([]);
@@ -286,13 +287,18 @@ export default function JobDetailPage() {
 
   async function loadEverything() {
     if (!jobId) return;
+    if (!companyId) {
+      setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
       setError("");
 
       const [jobRow, permitRows, inspectionRows, noteRows, activityRows] = await Promise.all([
-        fetchJobById(jobId),
+        fetchJobById(jobId, companyId),
         fetchPermits(jobId),
         fetchInspections(jobId),
         fetchNotes(jobId),

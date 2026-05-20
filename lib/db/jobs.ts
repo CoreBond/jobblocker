@@ -18,13 +18,14 @@ export async function fetchJobs(companyId: string): Promise<Job[]> {
   return data ?? [];
 }
 
-export async function fetchJobById(jobId: string): Promise<Job | null> {
+export async function fetchJobById(jobId: string, companyId: string): Promise<Job | null> {
   const supabase = createClient();
 
   const { data, error } = await supabase
     .from("jobs")
     .select("*")
     .eq("id", jobId)
+    .eq("company_id", companyId)
     .single();
 
   if (error) {

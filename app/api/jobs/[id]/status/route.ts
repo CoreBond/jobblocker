@@ -5,6 +5,7 @@ import { canMoveToStatus } from "@/lib/job-status";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const demoCompanyId = process.env.NEXT_PUBLIC_DEMO_COMPANY_ID;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables.");
@@ -33,10 +34,18 @@ export async function PATCH(
       );
     }
 
+    if (!demoCompanyId) {
+      return NextResponse.json(
+        { error: "Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local." },
+        { status: 500 }
+      );
+    }
+
     const { data: existingJob, error: fetchError } = await supabase
       .from("jobs")
       .select("id, company_id, status")
       .eq("id", id)
+      .eq("company_id", demoCompanyId)
       .single();
 
     if (fetchError) {
@@ -60,7 +69,8 @@ export async function PATCH(
     const { error: jobError } = await supabase
       .from("jobs")
       .update({ status: newStatus })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("company_id", demoCompanyId);
 
     if (jobError) {
       return NextResponse.json(
