@@ -103,6 +103,7 @@ export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [error, setError] = useState("");
   const companyId = process.env.NEXT_PUBLIC_DEMO_COMPANY_ID;
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
   useEffect(() => {
     async function loadJobs() {
@@ -140,9 +141,11 @@ export default function JobsPage() {
             <p className="text-sm text-slate-600">Active jobs and their next permit or inspection step.</p>
           </div>
 
-          <Button asChild className="bg-orange-600 hover:bg-orange-700">
-            <Link href="/jobs/new">Add Job</Link>
-          </Button>
+          {!isDemoMode ? (
+            <Button asChild className="bg-orange-600 hover:bg-orange-700">
+              <Link href="/jobs/new">Add Job</Link>
+            </Button>
+          ) : null}
         </div>
 
         <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -251,9 +254,11 @@ export default function JobsPage() {
                 <h2 className="font-black text-slate-950">No jobs yet.</h2>
                 <p className="mt-1 text-sm text-slate-600">Create the first job and get the engine turning.</p>
 
-                <Button asChild className="mt-3 bg-orange-600 hover:bg-orange-700">
-                  <Link href="/jobs/new">Add Job</Link>
-                </Button>
+                {!isDemoMode ? (
+                  <Button asChild className="mt-3 bg-orange-600 hover:bg-orange-700">
+                    <Link href="/jobs/new">Add Job</Link>
+                  </Button>
+                ) : null}
               </CardContent>
             </Card>
           ) : null}

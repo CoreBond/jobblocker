@@ -264,6 +264,7 @@ export default function JobDetailPage() {
   const params = useParams<{ id: string }>();
   const jobId = params.id;
   const companyId = process.env.NEXT_PUBLIC_DEMO_COMPANY_ID;
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
   const [job, setJob] = useState<Job | null>(null);
   const [permits, setPermits] = useState<Permit[]>([]);
@@ -336,6 +337,7 @@ export default function JobDetailPage() {
 
   async function handleAddPermit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isDemoMode) return;
     if (!jobId || !permitType.trim()) return;
     if (!companyId) {
       setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
@@ -364,6 +366,7 @@ export default function JobDetailPage() {
 
   async function handleAddInspection(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isDemoMode) return;
     if (!jobId || !inspectionType.trim()) return;
     if (!companyId) {
       setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
@@ -394,6 +397,7 @@ export default function JobDetailPage() {
 
   async function handleAddNote(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isDemoMode) return;
     if (!jobId || !noteText.trim()) return;
     if (!companyId) {
       setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
@@ -417,6 +421,7 @@ export default function JobDetailPage() {
   }
 
   async function handleInspectionStatus(id: string, status: "passed" | "failed") {
+    if (isDemoMode) return;
     if (!companyId) {
       setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
       return;
@@ -445,6 +450,7 @@ export default function JobDetailPage() {
   }
 
   async function handleJobStatusChange(newStatus: string) {
+    if (isDemoMode) return;
     if (!job || newStatus === job.status) return;
 
     if (!canMoveToStatus(job.status, newStatus)) {
@@ -482,6 +488,7 @@ export default function JobDetailPage() {
 
   async function handleSaveJobCoreFields(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isDemoMode) return;
     if (!job || !companyId) {
       setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
       return;
@@ -621,7 +628,7 @@ export default function JobDetailPage() {
                       <Input value={editNextAction} onChange={(event) => setEditNextAction(event.target.value)} />
                     </label>
 
-                    <Button type="submit" disabled={saving || !editName.trim()} className="bg-slate-950">
+                    <Button type="submit" disabled={saving || !editName.trim() || isDemoMode} className="bg-slate-950">
                       Save Job
                     </Button>
                   </form>
@@ -649,7 +656,7 @@ export default function JobDetailPage() {
                       <Input type="date" value={permitExpiration} onChange={(event) => setPermitExpiration(event.target.value)} />
                     </label>
 
-                    <Button type="submit" disabled={saving || !permitType.trim()} className="bg-slate-950">
+                    <Button type="submit" disabled={saving || !permitType.trim() || isDemoMode} className="bg-slate-950">
                       Add Permit
                     </Button>
                   </form>
@@ -715,7 +722,7 @@ export default function JobDetailPage() {
                       <Input value={inspectorName} onChange={(event) => setInspectorName(event.target.value)} placeholder="Mike R." />
                     </label>
 
-                    <Button type="submit" disabled={saving || !inspectionType.trim()} className="bg-slate-950">
+                    <Button type="submit" disabled={saving || !inspectionType.trim() || isDemoMode} className="bg-slate-950">
                       Add Inspection
                     </Button>
                   </form>
@@ -751,7 +758,7 @@ export default function JobDetailPage() {
                               <Button
                                 type="button"
                                 variant="outline"
-                                disabled={saving || inspection.status === "passed"}
+                                disabled={saving || inspection.status === "passed" || isDemoMode}
                                 onClick={() => handleInspectionStatus(inspection.id, "passed")}
                               >
                                 Mark Passed
@@ -760,7 +767,7 @@ export default function JobDetailPage() {
                               <Button
                                 type="button"
                                 variant="outline"
-                                disabled={saving || inspection.status === "failed"}
+                                disabled={saving || inspection.status === "failed" || isDemoMode}
                                 onClick={() => handleInspectionStatus(inspection.id, "failed")}
                               >
                                 Mark Failed
@@ -797,7 +804,7 @@ export default function JobDetailPage() {
                       placeholder="Called permit office. Waiting on review."
                     />
 
-                    <Button type="submit" disabled={saving || !noteText.trim()} className="bg-slate-950">
+                    <Button type="submit" disabled={saving || !noteText.trim() || isDemoMode} className="bg-slate-950">
                       Add Note
                     </Button>
                   </form>
@@ -834,7 +841,7 @@ export default function JobDetailPage() {
                       <label className="mb-1 block font-bold">Status:</label>
                       <select
                         value={job.status}
-                        disabled={saving}
+                        disabled={saving || isDemoMode}
                         onChange={(event) => handleJobStatusChange(event.target.value)}
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                       >

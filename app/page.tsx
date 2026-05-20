@@ -147,6 +147,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   const companyId = process.env.NEXT_PUBLIC_DEMO_COMPANY_ID;
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
   useEffect(() => {
     async function loadJobs() {
@@ -203,9 +204,11 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <Button asChild className="bg-orange-600 hover:bg-orange-700">
-            <Link href="/jobs/new">Add Job</Link>
-          </Button>
+          {!isDemoMode ? (
+            <Button asChild className="bg-orange-600 hover:bg-orange-700">
+              <Link href="/jobs/new">Add Job</Link>
+            </Button>
+          ) : null}
         </div>
 
         {loading ? (
@@ -311,9 +314,11 @@ export default function DashboardPage() {
                         Add the first job and JobBlocker starts becoming useful.
                       </p>
 
-                      <Button asChild className="mt-3 bg-orange-600 hover:bg-orange-700">
-                        <Link href="/jobs/new">Add Job</Link>
-                      </Button>
+                      {!isDemoMode ? (
+                        <Button asChild className="mt-3 bg-orange-600 hover:bg-orange-700">
+                          <Link href="/jobs/new">Add Job</Link>
+                        </Button>
+                      ) : null}
                     </CardContent>
                   </Card>
                 )}

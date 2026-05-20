@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 export default function NewJobPage() {
   const router = useRouter();
   const companyId = process.env.NEXT_PUBLIC_DEMO_COMPANY_ID;
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
   const [name, setName] = useState("");
   const [jobType, setJobType] = useState("");
@@ -22,6 +23,10 @@ export default function NewJobPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    if (isDemoMode) {
+      setError("Demo mode is read-only.");
+      return;
+    }
 
     if (!companyId) {
       setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
@@ -88,7 +93,7 @@ export default function NewJobPage() {
                 <Button type="button" variant="outline" onClick={() => router.push("/jobs")}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={saving} className="bg-orange-600 hover:bg-orange-700">
+                <Button type="submit" disabled={saving || isDemoMode} className="bg-orange-600 hover:bg-orange-700">
                   {saving ? "Saving..." : "Create Job"}
                 </Button>
               </div>
