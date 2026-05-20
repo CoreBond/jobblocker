@@ -3,6 +3,12 @@ import { updateStoredNextActionForJob } from "@/lib/job-next-action";
 import { createClient } from "@/lib/supabase/client";
 import type { Inspection, InspectionStatus, NewInspectionInput } from "@/types/jobblocker";
 
+function assertNotDemoMode() {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
+    throw new Error("Demo mode is read-only.");
+  }
+}
+
 async function assertJobBelongsToCompany(jobId: string, companyId: string): Promise<void> {
   const supabase = createClient();
 
@@ -68,6 +74,7 @@ export async function fetchInspections(jobId: string, companyId: string): Promis
 }
 
 export async function createInspection(input: NewInspectionInput, companyId: string): Promise<Inspection> {
+  assertNotDemoMode();
   await assertJobBelongsToCompany(input.job_id, companyId);
 
   const supabase = createClient();
@@ -109,6 +116,7 @@ export async function updateInspectionStatus(
   status: InspectionStatus,
   correctionNotes?: string
 ): Promise<Inspection> {
+  assertNotDemoMode();
   const { jobId } = await fetchInspectionJobAndCompany(inspectionId, companyId);
   await assertJobBelongsToCompany(jobId, companyId);
 

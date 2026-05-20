@@ -3,6 +3,12 @@ import { updateStoredNextActionForJob } from "@/lib/job-next-action";
 import { createClient } from "@/lib/supabase/client";
 import type { NewPermitInput, Permit } from "@/types/jobblocker";
 
+function assertNotDemoMode() {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
+    throw new Error("Demo mode is read-only.");
+  }
+}
+
 async function assertJobBelongsToCompany(jobId: string, companyId: string): Promise<void> {
   const supabase = createClient();
 
@@ -41,6 +47,7 @@ export async function fetchPermits(jobId: string, companyId: string): Promise<Pe
 }
 
 export async function createPermit(input: NewPermitInput, companyId: string): Promise<Permit> {
+  assertNotDemoMode();
   await assertJobBelongsToCompany(input.job_id, companyId);
 
   const supabase = createClient();

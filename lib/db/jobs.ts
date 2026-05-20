@@ -2,6 +2,12 @@ import { createActivity } from "@/lib/db/activity";
 import { createClient } from "@/lib/supabase/client";
 import type { Job, NewJobInput } from "@/types/jobblocker";
 
+function assertNotDemoMode() {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
+    throw new Error("Demo mode is read-only.");
+  }
+}
+
 export async function fetchJobs(companyId: string): Promise<Job[]> {
   const supabase = createClient();
 
@@ -36,6 +42,7 @@ export async function fetchJobById(jobId: string, companyId: string): Promise<Jo
 }
 
 export async function createJob(input: NewJobInput): Promise<Job> {
+  assertNotDemoMode();
   const supabase = createClient();
   const nextAction = input.next_action?.trim() || "Review job status";
 
@@ -78,6 +85,7 @@ export async function updateJobCoreFields(
     next_action: string;
   }
 ): Promise<Job> {
+  assertNotDemoMode();
   const supabase = createClient();
 
   const { data, error } = await supabase

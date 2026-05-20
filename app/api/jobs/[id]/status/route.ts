@@ -6,6 +6,7 @@ import { canMoveToStatus } from "@/lib/job-status";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const demoCompanyId = process.env.NEXT_PUBLIC_DEMO_COMPANY_ID;
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables.");
@@ -31,6 +32,13 @@ export async function PATCH(
       return NextResponse.json(
         { error: "Missing job id or status." },
         { status: 400 }
+      );
+    }
+
+    if (isDemoMode) {
+      return NextResponse.json(
+        { error: "Demo mode is read-only." },
+        { status: 403 }
       );
     }
 

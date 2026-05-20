@@ -1,6 +1,12 @@
 import { createClient } from "@/lib/supabase/client";
 import type { ActivityLog, NewActivityInput } from "@/types/jobblocker";
 
+function assertNotDemoMode() {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
+    throw new Error("Demo mode is read-only.");
+  }
+}
+
 async function assertJobBelongsToCompany(jobId: string, companyId: string): Promise<void> {
   const supabase = createClient();
 
@@ -39,6 +45,7 @@ export async function fetchActivity(jobId: string, companyId: string): Promise<A
 }
 
 export async function createActivity(input: NewActivityInput): Promise<ActivityLog> {
+  assertNotDemoMode();
   const supabase = createClient();
 
   const { data, error } = await supabase
