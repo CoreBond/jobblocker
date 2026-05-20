@@ -67,3 +67,35 @@ export async function createJob(input: NewJobInput): Promise<Job> {
 
   return data;
 }
+
+export async function updateJobCoreFields(
+  jobId: string,
+  companyId: string,
+  input: {
+    name: string;
+    customer_name: string;
+    job_type: string;
+    next_action: string;
+  }
+): Promise<Job> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from("jobs")
+    .update({
+      name: input.name.trim(),
+      customer_name: input.customer_name.trim() || null,
+      job_type: input.job_type.trim() || null,
+      next_action: input.next_action.trim() || null,
+    })
+    .eq("id", jobId)
+    .eq("company_id", companyId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { ActivityLog, Inspection, Job, JobNote, Permit } from "@/types/jobblocker";
-import { fetchJobById } from "@/lib/db/jobs";
+import { fetchJobById, updateJobCoreFields } from "@/lib/db/jobs";
 import { createPermit, fetchPermits } from "@/lib/db/permits";
 import { createInspection, fetchInspections, updateInspectionStatus } from "@/lib/db/inspections";
 import { createNote, fetchNotes } from "@/lib/db/notes";
@@ -284,6 +284,10 @@ export default function JobDetailPage() {
   const [inspectorName, setInspectorName] = useState("");
 
   const [noteText, setNoteText] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editCustomerName, setEditCustomerName] = useState("");
+  const [editJobType, setEditJobType] = useState("");
+  const [editNextAction, setEditNextAction] = useState("");
   const [saving, setSaving] = useState(false);
   const missingCompanyId = !companyId;
   const envError = missingCompanyId ? "Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local." : "";
@@ -308,6 +312,12 @@ export default function JobDetailPage() {
       setInspections(inspectionRows);
       setNotes(noteRows);
       setActivity(activityRows);
+      if (jobRow) {
+        setEditName(jobRow.name || "");
+        setEditCustomerName(jobRow.customer_name || "");
+        setEditJobType(jobRow.job_type || "");
+        setEditNextAction(jobRow.next_action || "");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load job record.");
     } finally {
@@ -470,6 +480,35 @@ export default function JobDetailPage() {
     }
   }
 
+  async function handleSaveJobCoreFields(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!job || !companyId) {
+      setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
+      return;
+    }
+
+    if (!editName.trim()) {
+      setError("Job name is required.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+      await updateJobCoreFields(job.id, companyId, {
+        name: editName,
+        customer_name: editCustomerName,
+        job_type: editJobType,
+        next_action: editNextAction,
+      });
+      await loadEverything();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update job.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const sortedActivity = [...activity].sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
@@ -556,6 +595,39 @@ export default function JobDetailPage() {
             </Card>
 
             <div className="grid gap-4 lg:grid-cols-2">
+              <Card>
+                <CardContent className="p-4">
+                  <h2 className="text-lg font-black text-slate-950">Edit job</h2>
+                  <p className="mt-1 text-sm text-slate-600">Update core job details.</p>
+
+                  <form onSubmit={handleSaveJobCoreFields} className="mt-4 space-y-3">
+                    <label className="block">
+                      <SmallLabel>Job name</SmallLabel>
+                      <Input value={editName} onChange={(event) => setEditName(event.target.value)} />
+                    </label>
+
+                    <label className="block">
+                      <SmallLabel>Customer name</SmallLabel>
+                      <Input value={editCustomerName} onChange={(event) => setEditCustomerName(event.target.value)} />
+                    </label>
+
+                    <label className="block">
+                      <SmallLabel>Job type</SmallLabel>
+                      <Input value={editJobType} onChange={(event) => setEditJobType(event.target.value)} />
+                    </label>
+
+                    <label className="block">
+                      <SmallLabel>Next action</SmallLabel>
+                      <Input value={editNextAction} onChange={(event) => setEditNextAction(event.target.value)} />
+                    </label>
+
+                    <Button type="submit" disabled={saving || !editName.trim()} className="bg-slate-950">
+                      Save Job
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
               <Card>
                 <CardContent className="p-4">
                   <h2 className="text-lg font-black text-slate-950">Permits</h2>
