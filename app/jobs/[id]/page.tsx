@@ -90,6 +90,10 @@ function getSmartNextAction(jobStatus: string, permits: Permit[], inspections: I
     return "Close job";
   }
 
+  if (jobStatus === "waiting_approval") {
+    return "Follow up on permit approval.";
+  }
+
   return "Review job status";
 }
 
@@ -607,31 +611,37 @@ export default function JobDetailPage() {
                   <h2 className="text-lg font-black text-slate-950">Edit job</h2>
                   <p className="mt-1 text-sm text-slate-600">Update core job details.</p>
 
-                  <form onSubmit={handleSaveJobCoreFields} className="mt-4 space-y-3">
-                    <label className="block">
-                      <SmallLabel>Job name</SmallLabel>
-                      <Input value={editName} onChange={(event) => setEditName(event.target.value)} />
-                    </label>
+                  {isDemoMode ? (
+                    <p className="mt-4 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
+                      Demo mode is read-only. Request access to try this with your own jobs.
+                    </p>
+                  ) : (
+                    <form onSubmit={handleSaveJobCoreFields} className="mt-4 space-y-3">
+                      <label className="block">
+                        <SmallLabel>Job name</SmallLabel>
+                        <Input value={editName} onChange={(event) => setEditName(event.target.value)} />
+                      </label>
 
-                    <label className="block">
-                      <SmallLabel>Customer name</SmallLabel>
-                      <Input value={editCustomerName} onChange={(event) => setEditCustomerName(event.target.value)} />
-                    </label>
+                      <label className="block">
+                        <SmallLabel>Customer name</SmallLabel>
+                        <Input value={editCustomerName} onChange={(event) => setEditCustomerName(event.target.value)} />
+                      </label>
 
-                    <label className="block">
-                      <SmallLabel>Job type</SmallLabel>
-                      <Input value={editJobType} onChange={(event) => setEditJobType(event.target.value)} />
-                    </label>
+                      <label className="block">
+                        <SmallLabel>Job type</SmallLabel>
+                        <Input value={editJobType} onChange={(event) => setEditJobType(event.target.value)} />
+                      </label>
 
-                    <label className="block">
-                      <SmallLabel>Next action</SmallLabel>
-                      <Input value={editNextAction} onChange={(event) => setEditNextAction(event.target.value)} />
-                    </label>
+                      <label className="block">
+                        <SmallLabel>Next action</SmallLabel>
+                        <Input value={editNextAction} onChange={(event) => setEditNextAction(event.target.value)} />
+                      </label>
 
-                    <Button type="submit" disabled={saving || !editName.trim() || isDemoMode} className="bg-slate-950">
-                      Save Job
-                    </Button>
-                  </form>
+                      <Button type="submit" disabled={saving || !editName.trim() || isDemoMode} className="bg-slate-950">
+                        Save Job
+                      </Button>
+                    </form>
+                  )}
                 </CardContent>
               </Card>
 
@@ -640,26 +650,32 @@ export default function JobDetailPage() {
                   <h2 className="text-lg font-black text-slate-950">Permits</h2>
                   <p className="mt-1 text-sm text-slate-600">Track permits, numbers, status, and expiration dates.</p>
 
-                  <form onSubmit={handleAddPermit} className="mt-4 space-y-3">
-                    <label className="block">
-                      <SmallLabel>Permit type</SmallLabel>
-                      <Input value={permitType} onChange={(event) => setPermitType(event.target.value)} placeholder="Building Permit" />
-                    </label>
+                  {isDemoMode ? (
+                    <p className="mt-4 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
+                      Demo mode is read-only. Request access to try this with your own jobs.
+                    </p>
+                  ) : (
+                    <form onSubmit={handleAddPermit} className="mt-4 space-y-3">
+                      <label className="block">
+                        <SmallLabel>Permit type</SmallLabel>
+                        <Input value={permitType} onChange={(event) => setPermitType(event.target.value)} placeholder="Building Permit" />
+                      </label>
 
-                    <label className="block">
-                      <SmallLabel>Permit number</SmallLabel>
-                      <Input value={permitNumber} onChange={(event) => setPermitNumber(event.target.value)} placeholder="BP-2026-1048" />
-                    </label>
+                      <label className="block">
+                        <SmallLabel>Permit number</SmallLabel>
+                        <Input value={permitNumber} onChange={(event) => setPermitNumber(event.target.value)} placeholder="BP-2026-1048" />
+                      </label>
 
-                    <label className="block">
-                      <SmallLabel>Expiration date</SmallLabel>
-                      <Input type="date" value={permitExpiration} onChange={(event) => setPermitExpiration(event.target.value)} />
-                    </label>
+                      <label className="block">
+                        <SmallLabel>Expiration date</SmallLabel>
+                        <Input type="date" value={permitExpiration} onChange={(event) => setPermitExpiration(event.target.value)} />
+                      </label>
 
-                    <Button type="submit" disabled={saving || !permitType.trim() || isDemoMode} className="bg-slate-950">
-                      Add Permit
-                    </Button>
-                  </form>
+                      <Button type="submit" disabled={saving || !permitType.trim() || isDemoMode} className="bg-slate-950">
+                        Add Permit
+                      </Button>
+                    </form>
+                  )}
 
                   <div className="mt-4 space-y-2">
                     {permits.length ? (
@@ -701,31 +717,37 @@ export default function JobDetailPage() {
                   <h2 className="text-lg font-black text-slate-950">Inspections</h2>
                   <p className="mt-1 text-sm text-slate-600">Track scheduled, passed, failed, and reinspection work.</p>
 
-                  <form onSubmit={handleAddInspection} className="mt-4 space-y-3">
-                    <label className="block">
-                      <SmallLabel>Inspection type</SmallLabel>
-                      <Input value={inspectionType} onChange={(event) => setInspectionType(event.target.value)} placeholder="Electrical Rough-In" />
-                    </label>
+                  {isDemoMode ? (
+                    <p className="mt-4 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
+                      Demo mode is read-only. Request access to try this with your own jobs.
+                    </p>
+                  ) : (
+                    <form onSubmit={handleAddInspection} className="mt-4 space-y-3">
+                      <label className="block">
+                        <SmallLabel>Inspection type</SmallLabel>
+                        <Input value={inspectionType} onChange={(event) => setInspectionType(event.target.value)} placeholder="Electrical Rough-In" />
+                      </label>
 
-                    <label className="block">
-                      <SmallLabel>Scheduled date</SmallLabel>
-                      <Input type="date" value={inspectionDate} onChange={(event) => setInspectionDate(event.target.value)} />
-                    </label>
+                      <label className="block">
+                        <SmallLabel>Scheduled date</SmallLabel>
+                        <Input type="date" value={inspectionDate} onChange={(event) => setInspectionDate(event.target.value)} />
+                      </label>
 
-                    <label className="block">
-                      <SmallLabel>Time window</SmallLabel>
-                      <Input value={inspectionWindow} onChange={(event) => setInspectionWindow(event.target.value)} placeholder="8 AM to noon" />
-                    </label>
+                      <label className="block">
+                        <SmallLabel>Time window</SmallLabel>
+                        <Input value={inspectionWindow} onChange={(event) => setInspectionWindow(event.target.value)} placeholder="8 AM to noon" />
+                      </label>
 
-                    <label className="block">
-                      <SmallLabel>Inspector</SmallLabel>
-                      <Input value={inspectorName} onChange={(event) => setInspectorName(event.target.value)} placeholder="Mike R." />
-                    </label>
+                      <label className="block">
+                        <SmallLabel>Inspector</SmallLabel>
+                        <Input value={inspectorName} onChange={(event) => setInspectorName(event.target.value)} placeholder="Mike R." />
+                      </label>
 
-                    <Button type="submit" disabled={saving || !inspectionType.trim() || isDemoMode} className="bg-slate-950">
-                      Add Inspection
-                    </Button>
-                  </form>
+                      <Button type="submit" disabled={saving || !inspectionType.trim() || isDemoMode} className="bg-slate-950">
+                        Add Inspection
+                      </Button>
+                    </form>
+                  )}
 
                   <div className="mt-4 space-y-2">
                     {inspections.length ? (
@@ -754,25 +776,27 @@ export default function JobDetailPage() {
                               <p className="mt-2 rounded-lg bg-red-100 p-2 text-xs text-red-800">{inspection.correction_notes}</p>
                             ) : null}
 
-                            <div className="mt-2 flex gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                disabled={saving || inspection.status === "passed" || isDemoMode}
-                                onClick={() => handleInspectionStatus(inspection.id, "passed")}
-                              >
-                                Mark Passed
-                              </Button>
+                            {!isDemoMode ? (
+                              <div className="mt-2 flex gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  disabled={saving || inspection.status === "passed" || isDemoMode}
+                                  onClick={() => handleInspectionStatus(inspection.id, "passed")}
+                                >
+                                  Mark Passed
+                                </Button>
 
-                              <Button
-                                type="button"
-                                variant="outline"
-                                disabled={saving || inspection.status === "failed" || isDemoMode}
-                                onClick={() => handleInspectionStatus(inspection.id, "failed")}
-                              >
-                                Mark Failed
-                              </Button>
-                            </div>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  disabled={saving || inspection.status === "failed" || isDemoMode}
+                                  onClick={() => handleInspectionStatus(inspection.id, "failed")}
+                                >
+                                  Mark Failed
+                                </Button>
+                              </div>
+                            ) : null}
                           </div>
                         );
                       })
@@ -792,22 +816,28 @@ export default function JobDetailPage() {
                   <h2 className="text-lg font-black text-slate-950">Notes</h2>
                   <p className="mt-1 text-sm text-slate-600">Internal job notes. Customer-safe visibility comes later.</p>
 
-                  <form onSubmit={handleAddNote} className="mt-4 space-y-3">
-                    <label className="block text-sm font-bold text-slate-800" htmlFor="job-note-input">
-                      Note
-                    </label>
-                    <textarea
-                      id="job-note-input"
-                      value={noteText}
-                      onChange={(event) => setNoteText(event.target.value)}
-                      className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-orange-500"
-                      placeholder="Called permit office. Waiting on review."
-                    />
+                  {isDemoMode ? (
+                    <p className="mt-4 rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
+                      Demo mode is read-only. Request access to try this with your own jobs.
+                    </p>
+                  ) : (
+                    <form onSubmit={handleAddNote} className="mt-4 space-y-3">
+                      <label className="block text-sm font-bold text-slate-800" htmlFor="job-note-input">
+                        Note
+                      </label>
+                      <textarea
+                        id="job-note-input"
+                        value={noteText}
+                        onChange={(event) => setNoteText(event.target.value)}
+                        className="min-h-24 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm outline-none focus:border-orange-500"
+                        placeholder="Called permit office. Waiting on review."
+                      />
 
-                    <Button type="submit" disabled={saving || !noteText.trim() || isDemoMode} className="bg-slate-950">
-                      Add Note
-                    </Button>
-                  </form>
+                      <Button type="submit" disabled={saving || !noteText.trim() || isDemoMode} className="bg-slate-950">
+                        Add Note
+                      </Button>
+                    </form>
+                  )}
 
                   <div className="mt-4 space-y-2">
                     {notes.length ? (
@@ -839,18 +869,22 @@ export default function JobDetailPage() {
 
                     <div className="rounded-xl bg-slate-50 p-3">
                       <label className="mb-1 block font-bold">Status:</label>
-                      <select
-                        value={job.status}
-                        disabled={saving || isDemoMode}
-                        onChange={(event) => handleJobStatusChange(event.target.value)}
-                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                      >
-                        {statusOptions.map((status) => (
-                          <option key={status} value={status}>
-                            {status === job.status ? `${getStatusLabel(status)} (current)` : getStatusLabel(status)}
-                          </option>
-                        ))}
-                      </select>
+                      {!isDemoMode ? (
+                        <select
+                          value={job.status}
+                          disabled={saving || isDemoMode}
+                          onChange={(event) => handleJobStatusChange(event.target.value)}
+                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                        >
+                          {statusOptions.map((status) => (
+                            <option key={status} value={status}>
+                              {status === job.status ? `${getStatusLabel(status)} (current)` : getStatusLabel(status)}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <p className="text-sm text-slate-700">{getStatusLabel(job.status)}</p>
+                      )}
                     </div>
 
                     <div className="rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
