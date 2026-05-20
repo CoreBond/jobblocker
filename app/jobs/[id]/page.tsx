@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { JobStatusChip } from "@/components/job/job-status-chip";
 import { canMoveToStatus, getStatusLabel, getStatusOptions } from "@/lib/job-status";
+import { buildCustomerSafeJobSummary } from "@/lib/customer-safe-job-summary";
 
 function formatStatus(status: string) {
   return getStatusLabel(status);
@@ -476,6 +477,7 @@ export default function JobDetailPage() {
   const visibleActivity = showFullActivity ? sortedActivity : sortedActivity.slice(0, 10);
   const hiddenActivityCount = Math.max(sortedActivity.length - visibleActivity.length, 0);
   const statusOptions = job ? getStatusOptions(job.status) : [];
+  const customerSafeSummary = job ? buildCustomerSafeJobSummary(job) : null;
 
   return (
     <div className="min-h-screen bg-slate-100">
@@ -515,6 +517,41 @@ export default function JobDetailPage() {
                 <div className="mt-4 rounded-xl bg-orange-50 p-4 text-sm text-slate-800">
                   <b>Next action:</b> {getSmartNextAction(job.status, permits, inspections)}
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <h2 className="text-lg font-black text-slate-950">Customer-safe preview</h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  Internal preview only. Public customer links are not enabled yet.
+                </p>
+
+                {customerSafeSummary ? (
+                  <div className="mt-3 grid gap-2 text-sm text-slate-700">
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <b>Job:</b> {customerSafeSummary.name}
+                    </div>
+                    {customerSafeSummary.customer_name ? (
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <b>Customer:</b> {customerSafeSummary.customer_name}
+                      </div>
+                    ) : null}
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <b>Status:</b> {customerSafeSummary.status_label}
+                    </div>
+                    {customerSafeSummary.next_action ? (
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <b>Next action:</b> {customerSafeSummary.next_action}
+                      </div>
+                    ) : null}
+                    {customerSafeSummary.updated_at ? (
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <b>Last updated:</b> {new Date(customerSafeSummary.updated_at).toLocaleString()}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
 
