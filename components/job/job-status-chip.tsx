@@ -13,7 +13,10 @@ export function JobStatusChip({ status }: { status: string }) {
       : "bg-slate-100 text-slate-700 border-slate-200";
 
   return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${tone}`}>
+    <span
+      aria-label={`Status: ${getStatusLabel(status)}`}
+      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${tone}`}
+    >
       {getStatusLabel(status)}
     </span>
   );

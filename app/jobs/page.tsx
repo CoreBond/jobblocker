@@ -212,7 +212,7 @@ export default function JobsPage() {
 
         <div className="space-y-3">
           {sortedJobs.map((job) => (
-            <Link key={job.id} href={`/jobs/${job.id}`} className="block">
+            <Link key={job.id} href={`/jobs/${job.id}`} aria-label={`Open job ${job.name}`} className="block">
               <Card className={`transition hover:-translate-y-0.5 hover:shadow-md ${getJobCardClass(job.status)}`}>
                 <CardContent className="p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
