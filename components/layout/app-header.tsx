@@ -10,7 +10,7 @@ export function AppHeader() {
         <div className="mx-auto mb-3 max-w-5xl rounded-lg border border-orange-300/40 bg-orange-500/20 px-3 py-2 text-sm font-semibold text-orange-100">
           Demo Mode - sample data only.{" "}
           <a
-            href="mailto:todd@corebond.io?subject=JobBlocker Early Access"
+            href="mailto:jobblocker@corebond.io?subject=JobBlocker Early Access Request"
             className="underline underline-offset-2 hover:text-white"
           >
             Request access
