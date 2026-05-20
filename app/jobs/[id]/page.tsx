@@ -284,14 +284,11 @@ export default function JobDetailPage() {
 
   const [noteText, setNoteText] = useState("");
   const [saving, setSaving] = useState(false);
+  const missingCompanyId = !companyId;
+  const envError = missingCompanyId ? "Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local." : "";
 
   async function loadEverything() {
-    if (!jobId) return;
-    if (!companyId) {
-      setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
-      setLoading(false);
-      return;
-    }
+    if (!jobId || !companyId) return;
 
     try {
       setLoading(true);
@@ -318,9 +315,13 @@ export default function JobDetailPage() {
   }
 
   useEffect(() => {
-    loadEverything();
+    if (missingCompanyId) return;
+
+    queueMicrotask(() => {
+      void loadEverything();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jobId]);
+  }, [jobId, companyId, missingCompanyId]);
 
   async function handleAddPermit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -475,9 +476,9 @@ export default function JobDetailPage() {
           </Card>
         ) : null}
 
-        {error ? (
+        {envError || error ? (
           <Card className="mb-4 border-red-200 bg-red-50">
-            <CardContent className="p-5 text-sm text-red-800">{error}</CardContent>
+            <CardContent className="p-5 text-sm text-red-800">{envError || error}</CardContent>
           </Card>
         ) : null}
 
