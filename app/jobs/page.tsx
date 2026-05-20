@@ -56,7 +56,7 @@ function getJobStatusMessage(status: string) {
   }
 
   if (status === "closed") {
-    return "Job closed.";
+    return "Job finished.";
   }
 
   return "Active job.";

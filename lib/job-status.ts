@@ -19,7 +19,7 @@ export const JOB_STATUS_LABELS: Record<JobStatus, string> = {
   inspection_phase: "Inspection Phase",
   ready_to_move: "Ready to Move",
   ready_to_close: "Ready to Close",
-  closed: "Closed",
+  closed: "Finished",
 };
 
 export const ALLOWED_STATUS_TRANSITIONS: Record<JobStatus, JobStatus[]> = {

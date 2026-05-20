@@ -2,7 +2,7 @@ import type { Inspection, Permit } from "@/types/jobblocker";
 
 export function getSmartNextAction(jobStatus: string, permits: Permit[], inspections: Inspection[]) {
   if (jobStatus === "closed") {
-    return "Job closed";
+    return "Job finished";
   }
 
   const today = new Date();
