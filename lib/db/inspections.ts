@@ -3,23 +3,29 @@ import { updateStoredNextActionForJob } from "@/lib/job-next-action";
 import { createClient } from "@/lib/supabase/client";
 import type { Inspection, InspectionStatus, NewInspectionInput } from "@/types/jobblocker";
 
-async function fetchJobCompanyId(jobId: string): Promise<string> {
+async function assertJobBelongsToCompany(jobId: string, companyId: string): Promise<void> {
   const supabase = createClient();
 
   const { data, error } = await supabase
     .from("jobs")
-    .select("company_id")
+    .select("id")
     .eq("id", jobId)
-    .single();
+    .eq("company_id", companyId)
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data.company_id;
+  if (!data) {
+    throw new Error("Job not found for this company.");
+  }
 }
 
-async function fetchInspectionJobAndCompany(inspectionId: string): Promise<{ jobId: string; companyId: string }> {
+async function fetchInspectionJobAndCompany(
+  inspectionId: string,
+  companyId: string
+): Promise<{ jobId: string; companyId: string }> {
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -33,6 +39,9 @@ async function fetchInspectionJobAndCompany(inspectionId: string): Promise<{ job
   }
 
   const job = Array.isArray(data.jobs) ? data.jobs[0] : data.jobs;
+  if (!job || job.company_id !== companyId) {
+    throw new Error("Inspection not found for this company.");
+  }
 
   return {
     jobId: data.job_id,
@@ -40,7 +49,9 @@ async function fetchInspectionJobAndCompany(inspectionId: string): Promise<{ job
   };
 }
 
-export async function fetchInspections(jobId: string): Promise<Inspection[]> {
+export async function fetchInspections(jobId: string, companyId: string): Promise<Inspection[]> {
+  await assertJobBelongsToCompany(jobId, companyId);
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -56,7 +67,9 @@ export async function fetchInspections(jobId: string): Promise<Inspection[]> {
   return data ?? [];
 }
 
-export async function createInspection(input: NewInspectionInput): Promise<Inspection> {
+export async function createInspection(input: NewInspectionInput, companyId: string): Promise<Inspection> {
+  await assertJobBelongsToCompany(input.job_id, companyId);
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -76,8 +89,6 @@ export async function createInspection(input: NewInspectionInput): Promise<Inspe
     throw new Error(error.message);
   }
 
-  const companyId = await fetchJobCompanyId(input.job_id);
-
   await createActivity({
     company_id: companyId,
     job_id: input.job_id,
@@ -94,9 +105,13 @@ export async function createInspection(input: NewInspectionInput): Promise<Inspe
 
 export async function updateInspectionStatus(
   inspectionId: string,
+  companyId: string,
   status: InspectionStatus,
   correctionNotes?: string
 ): Promise<Inspection> {
+  const { jobId } = await fetchInspectionJobAndCompany(inspectionId, companyId);
+  await assertJobBelongsToCompany(jobId, companyId);
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -114,8 +129,6 @@ export async function updateInspectionStatus(
   if (error) {
     throw new Error(error.message);
   }
-
-  const { jobId, companyId } = await fetchInspectionJobAndCompany(inspectionId);
 
   await createActivity({
     company_id: companyId,

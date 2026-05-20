@@ -296,10 +296,10 @@ export default function JobDetailPage() {
 
       const [jobRow, permitRows, inspectionRows, noteRows, activityRows] = await Promise.all([
         fetchJobById(jobId, companyId),
-        fetchPermits(jobId),
-        fetchInspections(jobId),
-        fetchNotes(jobId),
-        fetchActivity(jobId),
+        fetchPermits(jobId, companyId),
+        fetchInspections(jobId, companyId),
+        fetchNotes(jobId, companyId),
+        fetchActivity(jobId, companyId),
       ]);
 
       setJob(jobRow);
@@ -326,6 +326,10 @@ export default function JobDetailPage() {
   async function handleAddPermit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!jobId || !permitType.trim()) return;
+    if (!companyId) {
+      setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
+      return;
+    }
 
     try {
       setSaving(true);
@@ -335,7 +339,7 @@ export default function JobDetailPage() {
         permit_number: permitNumber.trim(),
         expiration_date: permitExpiration || undefined,
         status: "needed",
-      });
+      }, companyId);
       setPermitType("");
       setPermitNumber("");
       setPermitExpiration("");
@@ -350,6 +354,10 @@ export default function JobDetailPage() {
   async function handleAddInspection(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!jobId || !inspectionType.trim()) return;
+    if (!companyId) {
+      setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
+      return;
+    }
 
     try {
       setSaving(true);
@@ -360,7 +368,7 @@ export default function JobDetailPage() {
         time_window: inspectionWindow.trim(),
         inspector_name: inspectorName.trim(),
         status: inspectionDate ? "scheduled" : "needed",
-      });
+      }, companyId);
       setInspectionType("");
       setInspectionDate("");
       setInspectionWindow("");
@@ -376,6 +384,10 @@ export default function JobDetailPage() {
   async function handleAddNote(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!jobId || !noteText.trim()) return;
+    if (!companyId) {
+      setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
+      return;
+    }
 
     try {
       setSaving(true);
@@ -383,7 +395,7 @@ export default function JobDetailPage() {
         job_id: jobId,
         note: noteText.trim(),
         visibility: "internal",
-      });
+      }, companyId);
       setNoteText("");
       await loadEverything();
     } catch (err) {
@@ -394,6 +406,11 @@ export default function JobDetailPage() {
   }
 
   async function handleInspectionStatus(id: string, status: "passed" | "failed") {
+    if (!companyId) {
+      setError("Missing NEXT_PUBLIC_DEMO_COMPANY_ID in .env.local.");
+      return;
+    }
+
     const inspection = inspections.find((item) => item.id === id);
 
     if (!inspection || inspection.status === status) return;
@@ -403,6 +420,7 @@ export default function JobDetailPage() {
 
       await updateInspectionStatus(
         id,
+        companyId,
         status,
         status === "failed" ? "Correction required. Add details before reinspection." : undefined
       );

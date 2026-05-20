@@ -3,23 +3,28 @@ import { updateStoredNextActionForJob } from "@/lib/job-next-action";
 import { createClient } from "@/lib/supabase/client";
 import type { NewPermitInput, Permit } from "@/types/jobblocker";
 
-async function fetchJobCompanyId(jobId: string): Promise<string> {
+async function assertJobBelongsToCompany(jobId: string, companyId: string): Promise<void> {
   const supabase = createClient();
 
   const { data, error } = await supabase
     .from("jobs")
-    .select("company_id")
+    .select("id")
     .eq("id", jobId)
-    .single();
+    .eq("company_id", companyId)
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data.company_id;
+  if (!data) {
+    throw new Error("Job not found for this company.");
+  }
 }
 
-export async function fetchPermits(jobId: string): Promise<Permit[]> {
+export async function fetchPermits(jobId: string, companyId: string): Promise<Permit[]> {
+  await assertJobBelongsToCompany(jobId, companyId);
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -35,7 +40,9 @@ export async function fetchPermits(jobId: string): Promise<Permit[]> {
   return data ?? [];
 }
 
-export async function createPermit(input: NewPermitInput): Promise<Permit> {
+export async function createPermit(input: NewPermitInput, companyId: string): Promise<Permit> {
+  await assertJobBelongsToCompany(input.job_id, companyId);
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -54,8 +61,6 @@ export async function createPermit(input: NewPermitInput): Promise<Permit> {
   if (error) {
     throw new Error(error.message);
   }
-
-  const companyId = await fetchJobCompanyId(input.job_id);
 
   await createActivity({
     company_id: companyId,

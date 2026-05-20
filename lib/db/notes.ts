@@ -2,23 +2,28 @@ import { createActivity } from "@/lib/db/activity";
 import { createClient } from "@/lib/supabase/client";
 import type { JobNote, NewNoteInput } from "@/types/jobblocker";
 
-async function fetchJobCompanyId(jobId: string): Promise<string> {
+async function assertJobBelongsToCompany(jobId: string, companyId: string): Promise<void> {
   const supabase = createClient();
 
   const { data, error } = await supabase
     .from("jobs")
-    .select("company_id")
+    .select("id")
     .eq("id", jobId)
-    .single();
+    .eq("company_id", companyId)
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
   }
 
-  return data.company_id;
+  if (!data) {
+    throw new Error("Job not found for this company.");
+  }
 }
 
-export async function fetchNotes(jobId: string): Promise<JobNote[]> {
+export async function fetchNotes(jobId: string, companyId: string): Promise<JobNote[]> {
+  await assertJobBelongsToCompany(jobId, companyId);
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -34,7 +39,9 @@ export async function fetchNotes(jobId: string): Promise<JobNote[]> {
   return data ?? [];
 }
 
-export async function createNote(input: NewNoteInput): Promise<JobNote> {
+export async function createNote(input: NewNoteInput, companyId: string): Promise<JobNote> {
+  await assertJobBelongsToCompany(input.job_id, companyId);
+
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -50,8 +57,6 @@ export async function createNote(input: NewNoteInput): Promise<JobNote> {
   if (error) {
     throw new Error(error.message);
   }
-
-  const companyId = await fetchJobCompanyId(input.job_id);
 
   await createActivity({
     company_id: companyId,
