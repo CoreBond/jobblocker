@@ -150,13 +150,117 @@ function getInspectionStatusMessage(inspection: Inspection) {
   return "";
 }
 
+function shouldReplaceNextAction(nextAction: string | null) {
+  if (!nextAction) return true;
+
+  const normalized = nextAction.trim().toLowerCase();
+
+  return (
+    normalized === "" ||
+    normalized === "review job details" ||
+    normalized === "review job details." ||
+    normalized === "review job status" ||
+    normalized === "review job status."
+  );
+}
+
 export default async function WorkingAppJobDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ noteError?: string; permitError?: string; inspectionError?: string }>;
+  searchParams?: Promise<{ noteError?: string; permitError?: string; inspectionError?: string; inspectionUpdateError?: string }>;
 }) {
+  async function updateInspectionStatusInline(formData: FormData) {
+    "use server";
+
+    const context = await getCurrentUserContext();
+
+    if (!context.isAuthenticated) {
+      redirect("/login");
+    }
+
+    if (!context.companyId) {
+      redirect("/app/jobs?inspectionUpdateError=Company+setup+is+required+before+updating+inspections.");
+    }
+
+    const jobId = String(formData.get("job_id") || "").trim();
+    const inspectionId = String(formData.get("inspection_id") || "").trim();
+    const inspectionStatusRaw = String(formData.get("inspection_status") || "").trim();
+    const inspectionStatus = INSPECTION_STATUSES.includes(inspectionStatusRaw as InspectionStatus)
+      ? (inspectionStatusRaw as InspectionStatus)
+      : "needed";
+
+    if (!jobId || !inspectionId) {
+      redirect("/app/jobs?inspectionUpdateError=Missing+inspection+context.");
+    }
+
+    const supabase = await createClient();
+    const { data: jobRow, error: jobError } = await supabase
+      .from("jobs")
+      .select("id, next_action")
+      .eq("id", jobId)
+      .eq("company_id", context.companyId)
+      .maybeSingle();
+
+    if (jobError || !jobRow) {
+      redirect(`/app/jobs/${jobId}?inspectionUpdateError=Job+not+found+for+your+company.`);
+    }
+
+    const { data: inspectionRow, error: inspectionError } = await supabase
+      .from("inspections")
+      .select("id, job_id, inspection_type")
+      .eq("id", inspectionId)
+      .eq("job_id", jobId)
+      .maybeSingle();
+
+    if (inspectionError || !inspectionRow) {
+      redirect(`/app/jobs/${jobId}?inspectionUpdateError=Inspection+not+found+for+this+job.`);
+    }
+
+    const { error: updateInspectionError } = await supabase
+      .from("inspections")
+      .update({ status: inspectionStatus })
+      .eq("id", inspectionId)
+      .eq("job_id", jobId);
+
+    if (updateInspectionError) {
+      redirect(`/app/jobs/${jobId}?inspectionUpdateError=${encodeURIComponent(updateInspectionError.message)}`);
+    }
+
+    if (inspectionStatus === "failed" || inspectionStatusRaw === "reinspection_needed") {
+      const updatePayload: { status: Job["status"]; next_action?: string } = {
+        status: "needs_attention",
+      };
+
+      if (shouldReplaceNextAction(jobRow.next_action ?? null)) {
+        updatePayload.next_action = `Resolve inspection issue: ${inspectionRow.inspection_type}`;
+      }
+
+      await supabase
+        .from("jobs")
+        .update(updatePayload)
+        .eq("id", jobId)
+        .eq("company_id", context.companyId);
+    } else if (inspectionStatus === "scheduled") {
+      const updatePayload: { status: Job["status"]; next_action?: string } = {
+        status: "inspection_phase",
+      };
+
+      if (shouldReplaceNextAction(jobRow.next_action ?? null)) {
+        updatePayload.next_action = `Complete scheduled inspection: ${inspectionRow.inspection_type}`;
+      }
+
+      await supabase
+        .from("jobs")
+        .update(updatePayload)
+        .eq("id", jobId)
+        .eq("company_id", context.companyId);
+    }
+
+    redirect(`/app/jobs/${jobId}`);
+  }
+
   async function addJobInspection(formData: FormData) {
     "use server";
 
@@ -172,8 +276,10 @@ export default async function WorkingAppJobDetailPage({
 
     const jobId = String(formData.get("job_id") || "").trim();
     const inspectionType = String(formData.get("inspection_type") || "").trim();
-    const inspectionStatusRaw = String(formData.get("inspection_status") || "").trim() as InspectionStatus;
-    const inspectionStatus = INSPECTION_STATUSES.includes(inspectionStatusRaw) ? inspectionStatusRaw : "needed";
+    const inspectionStatusRaw = String(formData.get("inspection_status") || "").trim();
+    const inspectionStatus = INSPECTION_STATUSES.includes(inspectionStatusRaw as InspectionStatus)
+      ? (inspectionStatusRaw as InspectionStatus)
+      : "needed";
     const scheduledDate = String(formData.get("scheduled_date") || "").trim();
     const timeWindow = String(formData.get("time_window") || "").trim();
     const inspectorName = String(formData.get("inspector_name") || "").trim();
@@ -209,6 +315,50 @@ export default async function WorkingAppJobDetailPage({
 
     if (error) {
       redirect(`/app/jobs/${jobId}?inspectionError=${encodeURIComponent(error.message)}`);
+    }
+
+    if (inspectionStatus === "failed" || inspectionStatusRaw === "reinspection_needed") {
+      const { data: jobForUpdate } = await supabase
+        .from("jobs")
+        .select("next_action")
+        .eq("id", jobId)
+        .eq("company_id", context.companyId)
+        .maybeSingle();
+
+      const updatePayload: { status: Job["status"]; next_action?: string } = {
+        status: "needs_attention",
+      };
+
+      if (shouldReplaceNextAction(jobForUpdate?.next_action ?? null)) {
+        updatePayload.next_action = `Resolve inspection issue: ${inspectionType}`;
+      }
+
+      await supabase
+        .from("jobs")
+        .update(updatePayload)
+        .eq("id", jobId)
+        .eq("company_id", context.companyId);
+    } else if (inspectionStatus === "scheduled") {
+      const { data: jobForUpdate } = await supabase
+        .from("jobs")
+        .select("next_action")
+        .eq("id", jobId)
+        .eq("company_id", context.companyId)
+        .maybeSingle();
+
+      const updatePayload: { status: Job["status"]; next_action?: string } = {
+        status: "inspection_phase",
+      };
+
+      if (shouldReplaceNextAction(jobForUpdate?.next_action ?? null)) {
+        updatePayload.next_action = `Complete scheduled inspection: ${inspectionType}`;
+      }
+
+      await supabase
+        .from("jobs")
+        .update(updatePayload)
+        .eq("id", jobId)
+        .eq("company_id", context.companyId);
     }
 
     redirect(`/app/jobs/${jobId}`);
@@ -359,6 +509,7 @@ export default async function WorkingAppJobDetailPage({
   const noteError = resolvedSearchParams?.noteError || "";
   const permitError = resolvedSearchParams?.permitError || "";
   const inspectionError = resolvedSearchParams?.inspectionError || "";
+  const inspectionUpdateError = resolvedSearchParams?.inspectionUpdateError || "";
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("jobs")
@@ -405,7 +556,8 @@ export default async function WorkingAppJobDetailPage({
     .from("inspections")
     .select("*")
     .eq("job_id", job.id)
-    .order("scheduled_date", { ascending: true, nullsFirst: false });
+    .order("updated_at", { ascending: false })
+    .order("created_at", { ascending: false });
 
   const inspections = (inspectionsData ?? []) as Inspection[];
   const { data: notesData } = await supabase
@@ -555,68 +707,82 @@ export default async function WorkingAppJobDetailPage({
                 {inspectionError}
               </p>
             ) : null}
+            {inspectionUpdateError ? (
+              <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {inspectionUpdateError}
+              </p>
+            ) : null}
 
-            <form action={addJobInspection} className="mt-4 space-y-3">
-              <input type="hidden" name="job_id" value={job.id} />
+            <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+              <h3 className="text-sm font-black text-slate-900">Add New Inspection</h3>
+              <p className="mt-1 text-xs text-slate-600">This form creates a new inspection record.</p>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Inspection type</span>
-                <input
-                  name="inspection_type"
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
-                  placeholder="Electrical Rough-In"
-                  required
-                />
-              </label>
+              <form action={addJobInspection} className="mt-3 space-y-3">
+                <input type="hidden" name="job_id" value={job.id} />
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Scheduled date</span>
-                <input
-                  type="date"
-                  name="scheduled_date"
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
-                />
-              </label>
+                <label className="block">
+                  <span className="text-sm font-bold text-slate-800">Inspection type</span>
+                  <input
+                    name="inspection_type"
+                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
+                    placeholder="Electrical Rough-In"
+                    required
+                  />
+                </label>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Status</span>
-                <select
-                  name="inspection_status"
-                  defaultValue="needed"
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-                >
-                  {INSPECTION_STATUSES.map((statusOption) => (
-                    <option key={statusOption} value={statusOption}>
-                      {getInspectionStatusLabel(statusOption)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <label className="block">
+                  <span className="text-sm font-bold text-slate-800">Scheduled date</span>
+                  <input
+                    type="date"
+                    name="scheduled_date"
+                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
+                  />
+                </label>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Time window</span>
-                <input
-                  name="time_window"
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
-                  placeholder="8 AM to noon"
-                />
-              </label>
+                <label className="block">
+                  <span className="text-sm font-bold text-slate-800">Status</span>
+                  <select
+                    name="inspection_status"
+                    defaultValue="needed"
+                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                  >
+                    {INSPECTION_STATUSES.map((statusOption) => (
+                      <option key={statusOption} value={statusOption}>
+                        {getInspectionStatusLabel(statusOption)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Inspector</span>
-                <input
-                  name="inspector_name"
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
-                  placeholder="M. Rivera"
-                />
-              </label>
+                <label className="block">
+                  <span className="text-sm font-bold text-slate-800">Time window</span>
+                  <input
+                    name="time_window"
+                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
+                    placeholder="8 AM to noon"
+                  />
+                </label>
 
-              <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
-                Add Inspection
-              </Button>
-            </form>
+                <label className="block">
+                  <span className="text-sm font-bold text-slate-800">Inspector</span>
+                  <input
+                    name="inspector_name"
+                    className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
+                    placeholder="M. Rivera"
+                  />
+                </label>
 
-            <div className="mt-4 space-y-2">
+                <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
+                  Add New Inspection
+                </Button>
+              </form>
+            </div>
+
+            <div className="mt-4">
+              <h3 className="text-sm font-black text-slate-900">Existing Inspections</h3>
+            </div>
+
+            <div className="mt-2 space-y-2">
               {inspections.length === 0 ? (
                 <p className="text-sm text-slate-600">No inspections yet.</p>
               ) : (
@@ -646,6 +812,25 @@ export default async function WorkingAppJobDetailPage({
                           {inspection.correction_notes}
                         </p>
                       ) : null}
+
+                      <form action={updateInspectionStatusInline} className="mt-3 flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="job_id" value={job.id} />
+                        <input type="hidden" name="inspection_id" value={inspection.id} />
+                        <select
+                          name="inspection_status"
+                          defaultValue={inspection.status}
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900"
+                        >
+                          {INSPECTION_STATUSES.map((statusOption) => (
+                            <option key={statusOption} value={statusOption}>
+                              {getInspectionStatusLabel(statusOption)}
+                            </option>
+                          ))}
+                        </select>
+                        <Button type="submit" variant="outline" className="px-3 py-1.5 text-xs">
+                          Update Status
+                        </Button>
+                      </form>
                     </div>
                   );
                 })
