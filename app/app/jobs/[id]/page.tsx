@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUserContext } from "@/lib/auth/get-current-user-context";
+import { getStatusLabel } from "@/lib/job-status";
 import { createClient } from "@/lib/supabase/server";
 import type { Job } from "@/types/jobblocker";
 
@@ -106,12 +107,18 @@ export default async function WorkingAppJobDetailPage({
             </h1>
             <p className="mt-2 text-sm text-slate-700">Job: {job.name}</p>
             <p className="mt-1 text-sm text-slate-700">Job type: {job.job_type || "Not set"}</p>
-            <p className="mt-1 text-sm text-slate-700">Status: {job.status || "Not set"}</p>
+            <p className="mt-1 text-sm text-slate-700">Status: {getStatusLabel(job.status) || "Not set"}</p>
             <p className="mt-1 text-sm text-slate-700">
               Next action: {job.next_action || "Not set"}
             </p>
             <p className="mt-1 text-sm text-slate-700">Created: {formatDateTime(job.created_at)}</p>
             <p className="mt-1 text-sm text-slate-700">Updated: {formatDateTime(job.updated_at)}</p>
+
+            <div className="mt-4">
+              <Button asChild className="bg-orange-600 hover:bg-orange-700">
+                <Link href={`/app/jobs/${job.id}/edit`}>Edit Job</Link>
+              </Button>
+            </div>
 
             <div className="mt-4">
               <Button asChild variant="outline">

@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUserContext } from "@/lib/auth/get-current-user-context";
+import { getStatusLabel } from "@/lib/job-status";
 import { createClient } from "@/lib/supabase/server";
 import type { Job } from "@/types/jobblocker";
 
@@ -99,7 +100,7 @@ export default async function WorkingAppJobsPage() {
                       </p>
                       <p className="mt-1 text-sm text-slate-700">Job: {job.name}</p>
                       <p className="mt-1 text-sm text-slate-700">Job type: {job.job_type || "Not set"}</p>
-                      <p className="mt-1 text-sm text-slate-700">Status: {job.status || "Not set"}</p>
+                      <p className="mt-1 text-sm text-slate-700">Status: {getStatusLabel(job.status) || "Not set"}</p>
                       <p className="mt-1 text-sm text-slate-700">
                         Next action: {job.next_action || "Not set"}
                       </p>
