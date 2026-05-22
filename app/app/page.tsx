@@ -7,14 +7,143 @@ import { SignOutButton } from "@/app/app/sign-out-button";
 import { getCurrentUserContext } from "@/lib/auth/get-current-user-context";
 import { getStatusLabel } from "@/lib/job-status";
 import { createClient } from "@/lib/supabase/server";
-import type { Job } from "@/types/jobblocker";
+import type { Inspection, InspectionStatus, Job, Permit, PermitStatus } from "@/types/jobblocker";
 
-function StatCard({ label, value }: { label: string; value: number }) {
+function getStatusToneClass(status: Job["status"]) {
+  if (status === "needs_attention") return "border-rose-200 bg-rose-50";
+  if (status === "waiting_approval") return "border-amber-200 bg-amber-50";
+  if (status === "inspection_phase") return "border-indigo-200 bg-indigo-50";
+  if (status === "ready_to_move") return "border-emerald-200 bg-emerald-50";
+  if (status === "ready_to_close") return "border-teal-200 bg-teal-50";
+  if (status === "closed") return "border-slate-300 bg-slate-50";
+  return "border-sky-200 bg-sky-50";
+}
+
+const PERMIT_STATUS_LABELS: Record<PermitStatus, string> = {
+  needed: "Needed",
+  submitted: "Submitted",
+  waiting_approval: "Waiting Approval",
+  approved: "Approved",
+  rejected: "Rejected",
+  expiring_soon: "Expiring Soon",
+  expired: "Expired",
+  closed: "Closed",
+};
+
+const INSPECTION_STATUS_LABELS: Record<InspectionStatus, string> = {
+  needed: "Needed",
+  scheduled: "Scheduled",
+  passed: "Passed",
+  failed: "Failed",
+  rescheduled: "Reinspection Needed",
+  cancelled: "Cancelled",
+};
+
+function getPermitStatusLabel(status: PermitStatus) {
+  return PERMIT_STATUS_LABELS[status];
+}
+
+function getInspectionStatusLabel(status: InspectionStatus) {
+  return INSPECTION_STATUS_LABELS[status];
+}
+
+function getJobContextLine(jobId: string, permits: Permit[], inspections: Inspection[]) {
+  const jobPermits = permits.filter((permit) => permit.job_id === jobId);
+  const jobInspections = inspections.filter((inspection) => inspection.job_id === jobId);
+
+  const failedInspection = jobInspections.find((inspection) => inspection.status === "failed");
+  if (failedInspection) {
+    return `${failedInspection.inspection_type}: ${getInspectionStatusLabel(failedInspection.status)}`;
+  }
+
+  const reinspectionNeeded = jobInspections.find((inspection) => inspection.status === "rescheduled");
+  if (reinspectionNeeded) {
+    return `${reinspectionNeeded.inspection_type}: ${getInspectionStatusLabel(reinspectionNeeded.status)}`;
+  }
+
+  const rejectedPermit = jobPermits.find((permit) => permit.status === "rejected");
+  if (rejectedPermit) {
+    return `${rejectedPermit.permit_type}: ${getPermitStatusLabel(rejectedPermit.status)}`;
+  }
+
+  const expiredPermit = jobPermits.find((permit) => permit.status === "expired");
+  if (expiredPermit) {
+    return `${expiredPermit.permit_type}: ${getPermitStatusLabel(expiredPermit.status)}`;
+  }
+
+  const waitingApprovalPermit = jobPermits.find((permit) => permit.status === "waiting_approval");
+  if (waitingApprovalPermit) {
+    return `${waitingApprovalPermit.permit_type}: ${getPermitStatusLabel(waitingApprovalPermit.status)}`;
+  }
+
+  const submittedPermit = jobPermits.find((permit) => permit.status === "submitted");
+  if (submittedPermit) {
+    return `${submittedPermit.permit_type}: ${getPermitStatusLabel(submittedPermit.status)}`;
+  }
+
+  const scheduledInspection = jobInspections.find((inspection) => inspection.status === "scheduled");
+  if (scheduledInspection) {
+    return `${scheduledInspection.inspection_type}: ${getInspectionStatusLabel(scheduledInspection.status)}`;
+  }
+
+  return null;
+}
+
+function getLatestPermit(jobId: string, permits: Permit[]) {
+  const jobPermits = permits.filter((permit) => permit.job_id === jobId);
+  if (jobPermits.length === 0) {
+    return null;
+  }
+
+  return [...jobPermits].sort((a, b) => {
+    const aTime = new Date(a.updated_at || a.created_at).getTime();
+    const bTime = new Date(b.updated_at || b.created_at).getTime();
+    return bTime - aTime;
+  })[0];
+}
+
+function getLatestInspection(jobId: string, inspections: Inspection[]) {
+  const jobInspections = inspections.filter((inspection) => inspection.job_id === jobId);
+  if (jobInspections.length === 0) {
+    return null;
+  }
+
+  return [...jobInspections].sort((a, b) => {
+    const aTime = new Date(a.updated_at || a.created_at).getTime();
+    const bTime = new Date(b.updated_at || b.created_at).getTime();
+    return bTime - aTime;
+  })[0];
+}
+
+function StatCard({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: number;
+  tone?: "neutral" | "danger" | "warning" | "inspection" | "success" | "muted";
+}) {
+  const toneClass =
+    tone === "danger"
+      ? "border-rose-200 bg-rose-50"
+      : tone === "warning"
+        ? "border-amber-200 bg-amber-50"
+        : tone === "inspection"
+          ? "border-indigo-200 bg-indigo-50"
+          : tone === "success"
+            ? "border-emerald-200 bg-emerald-50"
+            : tone === "muted"
+              ? "border-slate-300 bg-slate-50"
+              : "border-sky-200 bg-sky-50";
+
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="text-2xl font-black text-slate-950">{value}</div>
-        <div className="text-xs font-bold text-slate-600">{label}</div>
+        <div className={`rounded-xl border px-3 py-3 ${toneClass}`}>
+          <div className="text-2xl font-black text-slate-950">{value}</div>
+          <div className="text-xs font-bold text-slate-600">{label}</div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -37,11 +166,27 @@ export default async function WorkingAppLandingPage() {
     : { data: [] as Job[] };
 
   const jobs = (data ?? []) as Job[];
+  const jobIds = jobs.map((job) => job.id);
+  const { data: permitsData } = jobIds.length
+    ? await supabase
+        .from("permits")
+        .select("job_id, permit_type, status, created_at, updated_at")
+        .in("job_id", jobIds)
+    : { data: [] as Permit[] };
+  const { data: inspectionsData } = jobIds.length
+    ? await supabase
+        .from("inspections")
+        .select("job_id, inspection_type, status, created_at, updated_at")
+        .in("job_id", jobIds)
+    : { data: [] as Inspection[] };
+  const permits = (permitsData ?? []) as Permit[];
+  const inspections = (inspectionsData ?? []) as Inspection[];
   const totalJobs = jobs.length;
   const needsAttention = jobs.filter((job) => job.status === "needs_attention").length;
   const waitingApproval = jobs.filter((job) => job.status === "waiting_approval").length;
   const inspectionPhase = jobs.filter((job) => job.status === "inspection_phase").length;
   const readyToMove = jobs.filter((job) => job.status === "ready_to_move").length;
+  const closedJobs = jobs.filter((job) => job.status === "closed").length;
   const recentJobs = jobs.slice(0, 5);
   const nextActionJobs = jobs.filter((job) => Boolean(job.next_action?.trim())).slice(0, 5);
 
@@ -77,12 +222,13 @@ export default async function WorkingAppLandingPage() {
 
             {!context.missingContext ? (
               <div className="mt-6 space-y-6">
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-                  <StatCard label="Total Jobs" value={totalJobs} />
-                  <StatCard label="Needs Attention" value={needsAttention} />
-                  <StatCard label="Waiting Approval" value={waitingApproval} />
-                  <StatCard label="Inspection Phase" value={inspectionPhase} />
-                  <StatCard label="Ready to Move" value={readyToMove} />
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+                  <StatCard label="Total Jobs" value={totalJobs} tone="neutral" />
+                  <StatCard label="Needs Attention" value={needsAttention} tone="danger" />
+                  <StatCard label="Waiting Approval" value={waitingApproval} tone="warning" />
+                  <StatCard label="Inspection Phase" value={inspectionPhase} tone="inspection" />
+                  <StatCard label="Ready to Move" value={readyToMove} tone="success" />
+                  <StatCard label="Closed Jobs" value={closedJobs} tone="muted" />
                 </div>
 
                 <section>
@@ -97,11 +243,30 @@ export default async function WorkingAppLandingPage() {
                         <Link
                           key={job.id}
                           href={`/app/jobs/${job.id}`}
-                          className="block rounded-xl border border-slate-200 bg-white p-3 text-sm transition hover:shadow-sm"
+                          className={`block rounded-xl border p-3 text-sm transition hover:shadow-sm ${getStatusToneClass(job.status)}`}
                         >
-                          <p className="font-black text-slate-900">{job.customer_name || job.name}</p>
-                          <p className="text-slate-700">Job: {job.name}</p>
-                          <p className="text-slate-600">Status: {getStatusLabel(job.status)}</p>
+                          {(() => {
+                            const latestPermit = getLatestPermit(job.id, permits);
+                            const latestInspection = getLatestInspection(job.id, inspections);
+                            return (
+                              <>
+                                <p className="font-black text-slate-900">{job.customer_name || job.name}</p>
+                                <p className="text-slate-700">Job: {job.name}</p>
+                                {latestPermit ? (
+                                  <p className="text-slate-600">
+                                    Permit: {latestPermit.permit_type}, {getPermitStatusLabel(latestPermit.status)}
+                                  </p>
+                                ) : null}
+                                {latestInspection ? (
+                                  <p className="text-slate-600">
+                                    Inspection: {latestInspection.inspection_type},{" "}
+                                    {getInspectionStatusLabel(latestInspection.status)}
+                                  </p>
+                                ) : null}
+                                {job.next_action ? <p className="text-slate-700">Reminder: {job.next_action}</p> : null}
+                              </>
+                            );
+                          })()}
                         </Link>
                       ))
                     )}
@@ -120,11 +285,30 @@ export default async function WorkingAppLandingPage() {
                         <Link
                           key={job.id}
                           href={`/app/jobs/${job.id}`}
-                          className="block rounded-xl border border-slate-200 bg-white p-3 text-sm transition hover:shadow-sm"
+                          className={`block rounded-xl border p-3 text-sm transition hover:shadow-sm ${getStatusToneClass(job.status)}`}
                         >
-                          <p className="font-black text-slate-900">{job.customer_name || job.name}</p>
-                          <p className="text-slate-700">{job.next_action}</p>
-                          <p className="text-slate-600">Status: {getStatusLabel(job.status)}</p>
+                          {(() => {
+                            const latestPermit = getLatestPermit(job.id, permits);
+                            const latestInspection = getLatestInspection(job.id, inspections);
+                            return (
+                              <>
+                                <p className="font-black text-slate-900">{job.customer_name || job.name}</p>
+                                <p className="text-slate-700">Job: {job.name}</p>
+                                {latestPermit ? (
+                                  <p className="text-slate-600">
+                                    Permit: {latestPermit.permit_type}, {getPermitStatusLabel(latestPermit.status)}
+                                  </p>
+                                ) : null}
+                                {latestInspection ? (
+                                  <p className="text-slate-600">
+                                    Inspection: {latestInspection.inspection_type},{" "}
+                                    {getInspectionStatusLabel(latestInspection.status)}
+                                  </p>
+                                ) : null}
+                                {job.next_action ? <p className="text-slate-700">Reminder: {job.next_action}</p> : null}
+                              </>
+                            );
+                          })()}
                         </Link>
                       ))
                     )}
