@@ -38,6 +38,12 @@ export default async function WorkingAppLandingPage() {
             ) : null}
 
             <div className="mt-4">
+              <Button asChild className="bg-orange-600 hover:bg-orange-700">
+                <Link href="/app/jobs">View Real Jobs</Link>
+              </Button>
+            </div>
+
+            <div className="mt-4">
               <SignOutButton />
             </div>
 
