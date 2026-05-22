@@ -245,6 +245,12 @@ export default function DashboardPage() {
                 <p className="mt-2 text-sm text-slate-600">
                   Track jobs, permits, inspections, notes, and next actions without turning your business into a software project.
                 </p>
+                <p className="mt-2 text-sm font-semibold text-orange-700">Demo Mode - sample data only.</p>
+                <div className="mt-3">
+                  <Button asChild variant="outline">
+                    <Link href="/app">Go to Working App (coming soon)</Link>
+                  </Button>
+                </div>
                 <p className="mt-3 text-xs font-semibold text-slate-500">Last updated: {lastUpdatedLabel}</p>
               </CardContent>
             </Card>

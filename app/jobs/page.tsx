@@ -139,6 +139,7 @@ export default function JobsPage() {
           <div>
             <h1 className="text-2xl font-black text-slate-950">Jobs</h1>
             <p className="text-sm text-slate-600">Active jobs and their next permit or inspection step.</p>
+            <p className="mt-1 text-sm font-semibold text-orange-700">Demo Mode - sample data only.</p>
           </div>
 
           {!isDemoMode ? (
