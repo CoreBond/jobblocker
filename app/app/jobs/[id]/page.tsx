@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUserContext } from "@/lib/auth/get-current-user-context";
 import { getStatusLabel } from "@/lib/job-status";
 import { createClient } from "@/lib/supabase/server";
-import type { Job, Permit, PermitStatus } from "@/types/jobblocker";
+import type { Inspection, InspectionStatus, Job, Permit, PermitStatus } from "@/types/jobblocker";
 
 const PERMIT_STATUSES: PermitStatus[] = [
   "needed",
@@ -17,6 +17,15 @@ const PERMIT_STATUSES: PermitStatus[] = [
   "expiring_soon",
   "expired",
   "closed",
+];
+
+const INSPECTION_STATUSES: InspectionStatus[] = [
+  "needed",
+  "scheduled",
+  "passed",
+  "failed",
+  "rescheduled",
+  "cancelled",
 ];
 
 const PERMIT_STATUS_LABELS: Record<PermitStatus, string> = {
@@ -32,6 +41,19 @@ const PERMIT_STATUS_LABELS: Record<PermitStatus, string> = {
 
 function getPermitStatusLabel(status: PermitStatus) {
   return PERMIT_STATUS_LABELS[status];
+}
+
+const INSPECTION_STATUS_LABELS: Record<InspectionStatus, string> = {
+  needed: "Needed",
+  scheduled: "Scheduled",
+  passed: "Passed",
+  failed: "Failed",
+  rescheduled: "Rescheduled",
+  cancelled: "Cancelled",
+};
+
+function getInspectionStatusLabel(status: InspectionStatus) {
+  return INSPECTION_STATUS_LABELS[status];
 }
 
 function formatDateTime(value: string | null) {
@@ -88,13 +110,110 @@ function getPermitUrgencyMessage(permit: Permit, urgency: string) {
   return "";
 }
 
+function getInspectionCardClass(status: InspectionStatus) {
+  if (status === "failed") {
+    return "rounded-xl border border-red-300 bg-red-50 p-3 text-sm";
+  }
+
+  if (status === "scheduled") {
+    return "rounded-xl border border-blue-300 bg-blue-50 p-3 text-sm";
+  }
+
+  if (status === "passed") {
+    return "rounded-xl border border-green-300 bg-green-50 p-3 text-sm";
+  }
+
+  if (status === "needed") {
+    return "rounded-xl border border-orange-300 bg-orange-50 p-3 text-sm";
+  }
+
+  return "rounded-xl bg-slate-50 p-3 text-sm";
+}
+
+function getInspectionStatusMessage(inspection: Inspection) {
+  if (inspection.status === "failed") {
+    return `${inspection.inspection_type} failed. Schedule reinspection.`;
+  }
+
+  if (inspection.status === "scheduled") {
+    return `${inspection.inspection_type} is scheduled.`;
+  }
+
+  if (inspection.status === "passed") {
+    return `${inspection.inspection_type} passed.`;
+  }
+
+  if (inspection.status === "needed") {
+    return `${inspection.inspection_type} needs scheduling.`;
+  }
+
+  return "";
+}
+
 export default async function WorkingAppJobDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ noteError?: string; permitError?: string }>;
+  searchParams?: Promise<{ noteError?: string; permitError?: string; inspectionError?: string }>;
 }) {
+  async function addJobInspection(formData: FormData) {
+    "use server";
+
+    const context = await getCurrentUserContext();
+
+    if (!context.isAuthenticated) {
+      redirect("/login");
+    }
+
+    if (!context.companyId) {
+      redirect("/app/jobs?inspectionError=Company+setup+is+required+before+adding+inspections.");
+    }
+
+    const jobId = String(formData.get("job_id") || "").trim();
+    const inspectionType = String(formData.get("inspection_type") || "").trim();
+    const inspectionStatusRaw = String(formData.get("inspection_status") || "").trim() as InspectionStatus;
+    const inspectionStatus = INSPECTION_STATUSES.includes(inspectionStatusRaw) ? inspectionStatusRaw : "needed";
+    const scheduledDate = String(formData.get("scheduled_date") || "").trim();
+    const timeWindow = String(formData.get("time_window") || "").trim();
+    const inspectorName = String(formData.get("inspector_name") || "").trim();
+
+    if (!jobId) {
+      redirect("/app/jobs?inspectionError=Missing+job+id.");
+    }
+
+    if (!inspectionType) {
+      redirect(`/app/jobs/${jobId}?inspectionError=Inspection+type+is+required.`);
+    }
+
+    const supabase = await createClient();
+    const { data: jobRow, error: jobError } = await supabase
+      .from("jobs")
+      .select("id")
+      .eq("id", jobId)
+      .eq("company_id", context.companyId)
+      .maybeSingle();
+
+    if (jobError || !jobRow) {
+      redirect(`/app/jobs/${jobId}?inspectionError=Job+not+found+for+your+company.`);
+    }
+
+    const { error } = await supabase.from("inspections").insert({
+      job_id: jobId,
+      inspection_type: inspectionType,
+      status: inspectionStatus,
+      scheduled_date: scheduledDate || null,
+      time_window: timeWindow || null,
+      inspector_name: inspectorName || null,
+    });
+
+    if (error) {
+      redirect(`/app/jobs/${jobId}?inspectionError=${encodeURIComponent(error.message)}`);
+    }
+
+    redirect(`/app/jobs/${jobId}`);
+  }
+
   async function addJobPermit(formData: FormData) {
     "use server";
 
@@ -239,6 +358,7 @@ export default async function WorkingAppJobDetailPage({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const noteError = resolvedSearchParams?.noteError || "";
   const permitError = resolvedSearchParams?.permitError || "";
+  const inspectionError = resolvedSearchParams?.inspectionError || "";
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("jobs")
@@ -281,6 +401,13 @@ export default async function WorkingAppJobDetailPage({
     .order("created_at", { ascending: false });
 
   const permits = (permitsData ?? []) as Permit[];
+  const { data: inspectionsData } = await supabase
+    .from("inspections")
+    .select("*")
+    .eq("job_id", job.id)
+    .order("scheduled_date", { ascending: true, nullsFirst: false });
+
+  const inspections = (inspectionsData ?? []) as Inspection[];
   const { data: notesData } = await supabase
     .from("notes")
     .select("id, note, visibility, created_at, user_id")
@@ -408,6 +535,115 @@ export default async function WorkingAppJobDetailPage({
                       {urgencyMessage ? (
                         <p className="mt-2 rounded-lg bg-white/70 p-2 text-xs font-semibold text-slate-800">
                           {urgencyMessage}
+                        </p>
+                      ) : null}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-4">
+          <CardContent className="p-6">
+            <h2 className="text-xl font-black text-slate-950">Inspections</h2>
+            <p className="mt-1 text-sm text-slate-600">Track scheduled, passed, failed, and reinspection work.</p>
+
+            {inspectionError ? (
+              <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {inspectionError}
+              </p>
+            ) : null}
+
+            <form action={addJobInspection} className="mt-4 space-y-3">
+              <input type="hidden" name="job_id" value={job.id} />
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Inspection type</span>
+                <input
+                  name="inspection_type"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
+                  placeholder="Electrical Rough-In"
+                  required
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Scheduled date</span>
+                <input
+                  type="date"
+                  name="scheduled_date"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Status</span>
+                <select
+                  name="inspection_status"
+                  defaultValue="needed"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                >
+                  {INSPECTION_STATUSES.map((statusOption) => (
+                    <option key={statusOption} value={statusOption}>
+                      {getInspectionStatusLabel(statusOption)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Time window</span>
+                <input
+                  name="time_window"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
+                  placeholder="8 AM to noon"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Inspector</span>
+                <input
+                  name="inspector_name"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-orange-500"
+                  placeholder="M. Rivera"
+                />
+              </label>
+
+              <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
+                Add Inspection
+              </Button>
+            </form>
+
+            <div className="mt-4 space-y-2">
+              {inspections.length === 0 ? (
+                <p className="text-sm text-slate-600">No inspections yet.</p>
+              ) : (
+                inspections.map((inspection) => {
+                  const inspectionMessage = getInspectionStatusMessage(inspection);
+
+                  return (
+                    <div key={inspection.id} className={getInspectionCardClass(inspection.status)}>
+                      <b>{inspection.inspection_type}</b>
+
+                      <p className="text-slate-600">
+                        {inspection.scheduled_date || "No date"}  |  {inspection.time_window || "No window"}
+                      </p>
+
+                      <p className="text-xs text-slate-500">
+                        Inspector: {inspection.inspector_name || "Not set"}  |  Status: {getInspectionStatusLabel(inspection.status)}
+                      </p>
+
+                      {inspectionMessage ? (
+                        <p className="mt-2 rounded-lg bg-white/70 p-2 text-xs font-semibold text-slate-800">
+                          {inspectionMessage}
+                        </p>
+                      ) : null}
+
+                      {inspection.correction_notes ? (
+                        <p className="mt-2 rounded-lg bg-red-100 p-2 text-xs text-red-800">
+                          {inspection.correction_notes}
                         </p>
                       ) : null}
                     </div>
