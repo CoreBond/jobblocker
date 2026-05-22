@@ -92,16 +92,19 @@ export default async function WorkingAppJobsPage() {
             {!error && jobs.length > 0 ? (
               <div className="mt-4 space-y-3">
                 {jobs.map((job) => (
-                  <div key={job.id} className="rounded-xl border border-slate-200 bg-white p-4">
-                    <p className="text-lg font-black text-slate-950">{job.name}</p>
-                    <p className="mt-1 text-sm text-slate-700">
-                      Customer: {job.customer_name || "Not set"}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-700">Status: {job.status || "Not set"}</p>
-                    <p className="mt-1 text-sm text-slate-700">
-                      Next action: {job.next_action || "Not set"}
-                    </p>
-                  </div>
+                  <Link key={job.id} href={`/app/jobs/${job.id}`} className="block" aria-label={`Open job ${job.name}`}>
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md">
+                      <p className="text-lg font-black text-slate-950">
+                        {job.customer_name || job.name}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-700">Job: {job.name}</p>
+                      <p className="mt-1 text-sm text-slate-700">Job type: {job.job_type || "Not set"}</p>
+                      <p className="mt-1 text-sm text-slate-700">Status: {job.status || "Not set"}</p>
+                      <p className="mt-1 text-sm text-slate-700">
+                        Next action: {job.next_action || "Not set"}
+                      </p>
+                    </div>
+                  </Link>
                 ))}
               </div>
             ) : null}
