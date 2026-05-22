@@ -7,11 +7,6 @@ import { getCurrentUserContext } from "@/lib/auth/get-current-user-context";
 import { createClient } from "@/lib/supabase/server";
 import type { Job } from "@/types/jobblocker";
 
-function readAddress(job: Job): string | null {
-  const maybeAddress = (job as Job & { address?: string | null }).address;
-  return maybeAddress || null;
-}
-
 export default async function WorkingAppJobsPage() {
   const context = await getCurrentUserContext();
 
@@ -101,9 +96,6 @@ export default async function WorkingAppJobsPage() {
                     <p className="text-lg font-black text-slate-950">{job.name}</p>
                     <p className="mt-1 text-sm text-slate-700">
                       Customer: {job.customer_name || "Not set"}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-700">
-                      Address: {readAddress(job) || "Not set"}
                     </p>
                     <p className="mt-1 text-sm text-slate-700">Status: {job.status || "Not set"}</p>
                     <p className="mt-1 text-sm text-slate-700">

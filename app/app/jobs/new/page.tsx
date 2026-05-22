@@ -26,7 +26,6 @@ async function createWorkingJob(formData: FormData) {
 
   const name = String(formData.get("name") || "").trim();
   const customerName = String(formData.get("customer_name") || "").trim();
-  const address = String(formData.get("address") || "").trim();
   const jobType = String(formData.get("job_type") || "").trim();
   const nextAction = String(formData.get("next_action") || "").trim();
   const statusRaw = String(formData.get("status") || "").trim();
@@ -35,16 +34,12 @@ async function createWorkingJob(formData: FormData) {
   if (!name) {
     redirect("/app/jobs/new?error=Job+name+is+required.");
   }
-  if (!address) {
-    redirect("/app/jobs/new?error=Address+is+required.");
-  }
 
   const supabase = await createClient();
   const { error } = await supabase.from("jobs").insert({
     company_id: context.companyId,
     name,
     customer_name: customerName || null,
-    address,
     job_type: jobType || null,
     status,
     next_action: nextAction || "Review job details.",
@@ -127,10 +122,9 @@ export default async function WorkingAppNewJobPage({ searchParams }: CreateJobPa
                 <Input name="customer_name" placeholder="Smith Family" />
               </label>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Address / location</span>
-                <Input name="address" placeholder="144 Maple Street" required />
-              </label>
+              <p className="rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
+                Address/location support needs a later schema update and is not saved yet.
+              </p>
 
               <label className="block">
                 <span className="text-sm font-bold text-slate-800">Job type (optional)</span>
