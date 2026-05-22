@@ -70,6 +70,11 @@ export default async function WorkingAppJobsPage() {
             <p className="mt-2 text-sm text-slate-700">
               Company: {context.companyName || context.companyId}
             </p>
+            <div className="mt-4">
+              <Button asChild className="bg-orange-600 hover:bg-orange-700">
+                <Link href="/app/jobs/new">Create Job</Link>
+              </Button>
+            </div>
 
             {error ? (
               <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
@@ -81,6 +86,11 @@ export default async function WorkingAppJobsPage() {
               <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
                 <p className="font-black text-slate-950">No real jobs yet.</p>
                 <p className="mt-1 text-sm text-slate-600">Create job will come next.</p>
+                <div className="mt-3">
+                  <Button asChild className="bg-orange-600 hover:bg-orange-700">
+                    <Link href="/app/jobs/new">Create Job</Link>
+                  </Button>
+                </div>
               </div>
             ) : null}
 
