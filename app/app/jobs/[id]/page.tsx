@@ -169,8 +169,62 @@ export default async function WorkingAppJobDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams?: Promise<{ noteError?: string; permitError?: string; inspectionError?: string; inspectionUpdateError?: string }>;
+  searchParams?: Promise<{ noteError?: string; permitError?: string; inspectionError?: string; inspectionUpdateError?: string; reminderError?: string }>;
 }) {
+  async function updateJobReminder(formData: FormData) {
+    "use server";
+
+    const context = await getCurrentUserContext();
+
+    if (!context.isAuthenticated) {
+      redirect("/login");
+    }
+
+    if (!context.companyId) {
+      redirect("/app/jobs?reminderError=Company+setup+is+required+before+updating+reminders.");
+    }
+
+    const jobId = String(formData.get("job_id") || "").trim();
+    const reminderText = String(formData.get("reminder") || "").trim();
+
+    if (!jobId) {
+      redirect("/app/jobs?reminderError=Missing+job+id.");
+    }
+
+    const supabase = await createClient();
+    const { data: currentJob } = await supabase
+      .from("jobs")
+      .select("next_action")
+      .eq("id", jobId)
+      .eq("company_id", context.companyId)
+      .maybeSingle();
+
+    const { error } = await supabase
+      .from("jobs")
+      .update({ next_action: reminderText || null })
+      .eq("id", jobId)
+      .eq("company_id", context.companyId);
+
+    if (error) {
+      redirect(`/app/jobs/${jobId}?reminderError=${encodeURIComponent(error.message)}#notes`);
+    }
+
+    const oldReminder = currentJob?.next_action?.trim() || "";
+    const newReminder = reminderText || "";
+    const reminderHistoryNote =
+      oldReminder && newReminder
+        ? `Reminder updated from "${oldReminder}" to "${newReminder}"`
+        : `Reminder updated: ${newReminder || "(cleared)"}`;
+
+    await supabase.from("notes").insert({
+      job_id: jobId,
+      note: reminderHistoryNote,
+      visibility: "internal",
+    });
+
+    redirect(`/app/jobs/${jobId}#notes`);
+  }
+
   async function updateInspectionStatusInline(formData: FormData) {
     "use server";
 
@@ -510,6 +564,7 @@ export default async function WorkingAppJobDetailPage({
   const permitError = resolvedSearchParams?.permitError || "";
   const inspectionError = resolvedSearchParams?.inspectionError || "";
   const inspectionUpdateError = resolvedSearchParams?.inspectionUpdateError || "";
+  const reminderError = resolvedSearchParams?.reminderError || "";
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("jobs")
@@ -583,7 +638,7 @@ export default async function WorkingAppJobDetailPage({
             <p className="mt-1 text-sm text-slate-700">Job type: {job.job_type || "Not set"}</p>
             <p className="mt-1 text-sm text-slate-700">Status: {getStatusLabel(job.status) || "Not set"}</p>
             <p className="mt-1 text-sm text-slate-700">
-              Next action: {job.next_action || "Not set"}
+              Reminder: {job.next_action || "Not set"}
             </p>
             <p className="mt-1 text-sm text-slate-700">Created: {formatDateTime(job.created_at)}</p>
             <p className="mt-1 text-sm text-slate-700">Updated: {formatDateTime(job.updated_at)}</p>
@@ -839,9 +894,33 @@ export default async function WorkingAppJobDetailPage({
           </CardContent>
         </Card>
 
-        <Card className="mt-4">
+        <Card id="notes" className="mt-4">
           <CardContent className="p-6">
             <h2 className="text-xl font-black text-slate-950">Notes</h2>
+            <h3 className="mt-3 text-sm font-black text-slate-900">Reminder</h3>
+            <p className="mt-1 text-xs text-slate-600">This appears on the dashboard card.</p>
+
+            {reminderError ? (
+              <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                {reminderError}
+              </p>
+            ) : null}
+
+            <form action={updateJobReminder} className="mt-3 space-y-3">
+              <input type="hidden" name="job_id" value={job.id} />
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Reminder</span>
+                <textarea
+                  name="reminder"
+                  defaultValue={job.next_action || ""}
+                  className="mt-1 min-h-20 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none focus:border-orange-500"
+                  placeholder="Set the current reminder for this job."
+                />
+              </label>
+              <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
+                Update Reminder
+              </Button>
+            </form>
 
             {noteError ? (
               <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
@@ -870,6 +949,11 @@ export default async function WorkingAppJobDetailPage({
               ) : (
                 notes.map((note) => (
                   <div key={note.id} className="rounded-xl border border-slate-200 bg-white p-3 text-sm">
+                    {note.note.startsWith("Reminder updated:") || note.note.startsWith("Reminder updated from") ? (
+                      <p className="mb-1 inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700">
+                        Reminder
+                      </p>
+                    ) : null}
                     <p className="text-slate-900">{note.note}</p>
                     <p className="mt-1 text-xs text-slate-500">
                       {formatDateTime(note.created_at)}  |  {note.visibility}
