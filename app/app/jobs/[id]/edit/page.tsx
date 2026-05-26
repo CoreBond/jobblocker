@@ -79,17 +79,16 @@ async function updateWorkingJob(formData: FormData) {
   });
 
   const supabase = await createClient();
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from("jobs")
     .update({
       status,
     })
     .eq("id", jobId)
     .eq("company_id", jobCompanyId)
-    .select("id")
-    .maybeSingle();
+    .select("id");
 
-  if (error || !data) {
+  if (error) {
     redirect(`/app/jobs/${jobId}/edit?error=Failed+to+update+job.`);
   }
 
