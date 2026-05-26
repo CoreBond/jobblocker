@@ -27,6 +27,7 @@ const ALLOWED_STATUSES: JobStatus[] = [
 
 async function updateWorkingJob(formData: FormData) {
   "use server";
+  console.log("[WorkingAppEditJob] updateWorkingJob START");
 
   const context = await getCurrentUserContext();
 
@@ -47,19 +48,40 @@ async function updateWorkingJob(formData: FormData) {
   const status = String(formData.get("status") || "").trim() as JobStatus;
   const nextAction = String(formData.get("next_action") || "").trim();
 
+  console.log("[WorkingAppEditJob] updateWorkingJob fields", {
+    jobId,
+    hasName: Boolean(name),
+    status,
+    jobCompanyId,
+    jobAddress,
+  });
+
   if (!jobId) {
+    console.error("[WorkingAppEditJob] updateWorkingJob early redirect: missing job id");
     redirect("/app/jobs?error=Missing+job+id.");
   }
 
   if (!name) {
+    console.error("[WorkingAppEditJob] updateWorkingJob early redirect: missing required job fields", {
+      jobId,
+      hasName: Boolean(name),
+    });
     redirect(`/app/jobs/${jobId}/edit?error=Job+name+is+required.`);
   }
 
   if (!ALLOWED_STATUSES.includes(status)) {
+    console.error("[WorkingAppEditJob] updateWorkingJob early redirect: invalid status selected", {
+      jobId,
+      status,
+    });
     redirect(`/app/jobs/${jobId}/edit?error=Invalid+status+selected.`);
   }
 
   if (!jobCompanyId) {
+    console.error("[WorkingAppEditJob] updateWorkingJob early redirect: missing job company context", {
+      jobId,
+      jobCompanyId,
+    });
     redirect(`/app/jobs/${jobId}/edit?error=Missing+job+company+context.`);
   }
 
@@ -70,6 +92,11 @@ async function updateWorkingJob(formData: FormData) {
     jobAddress,
   });
 
+  console.log("[WorkingAppEditJob] updateWorkingJob before core update", {
+    jobId,
+    jobCompanyId,
+  });
+
   await updateJobCoreFieldsServer(jobId, jobCompanyId, {
     name,
     customer_name: customerName,
@@ -78,7 +105,18 @@ async function updateWorkingJob(formData: FormData) {
     next_action: nextAction,
   });
 
+  console.log("[WorkingAppEditJob] updateWorkingJob after core update", {
+    jobId,
+    jobCompanyId,
+  });
+
   const supabase = await createClient();
+  console.log("[WorkingAppEditJob] updateWorkingJob before status update", {
+    jobId,
+    jobCompanyId,
+    status,
+  });
+
   const { error } = await supabase
     .from("jobs")
     .update({
@@ -89,8 +127,20 @@ async function updateWorkingJob(formData: FormData) {
     .select("id");
 
   if (error) {
+    console.error("[WorkingAppEditJob] updateWorkingJob early redirect: failed status update", {
+      jobId,
+      jobCompanyId,
+      status,
+      error: error.message,
+    });
     redirect(`/app/jobs/${jobId}/edit?error=Failed+to+update+job.`);
   }
+
+  console.log("[WorkingAppEditJob] updateWorkingJob after status update", {
+    jobId,
+    jobCompanyId,
+    status,
+  });
 
   redirect(`/app/jobs/${jobId}`);
 }
