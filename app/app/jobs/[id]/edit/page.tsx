@@ -27,7 +27,6 @@ const ALLOWED_STATUSES: JobStatus[] = [
 
 async function updateWorkingJob(formData: FormData) {
   "use server";
-  console.log("[WorkingAppEditJob] updateWorkingJob START");
 
   const context = await getCurrentUserContext();
 
@@ -47,14 +46,6 @@ async function updateWorkingJob(formData: FormData) {
   const jobCompanyId = String(formData.get("job_company_id") || "").trim();
   const status = String(formData.get("status") || "").trim() as JobStatus;
   const nextAction = String(formData.get("next_action") || "").trim();
-
-  console.log("[WorkingAppEditJob] updateWorkingJob fields", {
-    jobId,
-    hasName: Boolean(name),
-    status,
-    jobCompanyId,
-    jobAddress,
-  });
 
   if (!jobId) {
     console.error("[WorkingAppEditJob] updateWorkingJob early redirect: missing job id");
@@ -85,18 +76,6 @@ async function updateWorkingJob(formData: FormData) {
     redirect(`/app/jobs/${jobId}/edit?error=Missing+job+company+context.`);
   }
 
-  console.log("[WorkingAppEditJob] updateWorkingJob payload", {
-    jobId,
-    jobCompanyId,
-    name,
-    jobAddress,
-  });
-
-  console.log("[WorkingAppEditJob] updateWorkingJob before core update", {
-    jobId,
-    jobCompanyId,
-  });
-
   try {
     await updateJobCoreFieldsServer(jobId, jobCompanyId, {
       name,
@@ -111,17 +90,7 @@ async function updateWorkingJob(formData: FormData) {
     redirect(`/app/jobs/${jobId}/edit?error=${encodeURIComponent(message)}`);
   }
 
-  console.log("[WorkingAppEditJob] updateWorkingJob after core update", {
-    jobId,
-    jobCompanyId,
-  });
-
   const supabase = await createClient();
-  console.log("[WorkingAppEditJob] updateWorkingJob before status update", {
-    jobId,
-    jobCompanyId,
-    status,
-  });
 
   const { error } = await supabase
     .from("jobs")
@@ -136,12 +105,6 @@ async function updateWorkingJob(formData: FormData) {
     console.error("[WorkingAppEditJob] status update failed", error);
     redirect(`/app/jobs/${jobId}/edit?error=${encodeURIComponent(error.message)}`);
   }
-
-  console.log("[WorkingAppEditJob] updateWorkingJob after status update", {
-    jobId,
-    jobCompanyId,
-    status,
-  });
 
   redirect(`/app/jobs/${jobId}`);
 }
@@ -220,11 +183,6 @@ export default async function WorkingAppEditJobPage({ params, searchParams }: Ed
       </div>
     );
   }
-
-  console.log("[WorkingAppEditJob] render job company context", {
-    jobId: id,
-    dataCompanyId: data.company_id,
-  });
 
   return (
     <div className="min-h-screen bg-slate-100">
