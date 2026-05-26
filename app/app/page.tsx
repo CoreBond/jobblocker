@@ -252,6 +252,7 @@ export default async function WorkingAppLandingPage() {
                               <>
                                 <p className="font-black text-slate-900">{job.customer_name || job.name}</p>
                                 <p className="text-slate-700">Job: {job.name}</p>
+                                {job.job_address ? <p className="text-xs text-slate-600">{job.job_address}</p> : null}
                                 {latestPermit ? (
                                   <p className="text-slate-600">
                                     Permit: {latestPermit.permit_type}, {getPermitStatusLabel(latestPermit.status)}
@@ -294,6 +295,7 @@ export default async function WorkingAppLandingPage() {
                               <>
                                 <p className="font-black text-slate-900">{job.customer_name || job.name}</p>
                                 <p className="text-slate-700">Job: {job.name}</p>
+                                {job.job_address ? <p className="text-xs text-slate-600">{job.job_address}</p> : null}
                                 {latestPermit ? (
                                   <p className="text-slate-600">
                                     Permit: {latestPermit.permit_type}, {getPermitStatusLabel(latestPermit.status)}

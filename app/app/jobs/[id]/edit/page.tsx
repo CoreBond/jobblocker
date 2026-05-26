@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getCurrentUserContext } from "@/lib/auth/get-current-user-context";
+import { updateJobCoreFields } from "@/lib/db/jobs";
 import { getStatusLabel } from "@/lib/job-status";
 import { createClient } from "@/lib/supabase/server";
 import type { JobStatus } from "@/types/jobblocker";
@@ -41,6 +42,7 @@ async function updateWorkingJob(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const customerName = String(formData.get("customer_name") || "").trim();
   const jobType = String(formData.get("job_type") || "").trim();
+  const jobAddress = String(formData.get("job_address") || "").trim();
   const status = String(formData.get("status") || "").trim() as JobStatus;
   const nextAction = String(formData.get("next_action") || "").trim();
 
@@ -56,15 +58,19 @@ async function updateWorkingJob(formData: FormData) {
     redirect(`/app/jobs/${jobId}/edit?error=Invalid+status+selected.`);
   }
 
+  await updateJobCoreFields(jobId, context.companyId, {
+    name,
+    customer_name: customerName,
+    job_type: jobType,
+    job_address: jobAddress,
+    next_action: nextAction,
+  });
+
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("jobs")
     .update({
-      name,
-      customer_name: customerName || null,
-      job_type: jobType || null,
       status,
-      next_action: nextAction || "Review job details.",
     })
     .eq("id", jobId)
     .eq("company_id", context.companyId)
@@ -188,6 +194,11 @@ export default async function WorkingAppEditJobPage({ params, searchParams }: Ed
               <label className="block">
                 <span className="text-sm font-bold text-slate-800">Job type</span>
                 <Input name="job_type" defaultValue={data.job_type || ""} />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Job address / location</span>
+                <Input name="job_address" defaultValue={data.job_address || ""} />
               </label>
 
               <label className="block">

@@ -13,6 +13,7 @@ export type Job = {
   jurisdiction_id: string | null;
   name: string;
   job_type: string | null;
+  job_address: string | null;
   customer_name: string | null;
   customer_email: string | null;
   customer_phone: string | null;
@@ -29,6 +30,7 @@ export type NewJobInput = {
   company_id: string;
   name: string;
   job_type?: string;
+  job_address?: string;
   customer_name?: string;
   next_action?: string;
 };

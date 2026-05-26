@@ -52,6 +52,7 @@ export async function createJob(input: NewJobInput): Promise<Job> {
       company_id: input.company_id,
       name: input.name,
       job_type: input.job_type || null,
+      job_address: input.job_address?.trim() || null,
       customer_name: input.customer_name?.trim() || null,
       next_action: nextAction,
       status: "active",
@@ -82,6 +83,7 @@ export async function updateJobCoreFields(
     name: string;
     customer_name: string;
     job_type: string;
+    job_address?: string;
     next_action: string;
   }
 ): Promise<Job> {
@@ -94,6 +96,7 @@ export async function updateJobCoreFields(
       name: input.name.trim(),
       customer_name: input.customer_name.trim() || null,
       job_type: input.job_type.trim() || null,
+      job_address: input.job_address?.trim() || null,
       next_action: input.next_action.trim() || null,
     })
     .eq("id", jobId)
