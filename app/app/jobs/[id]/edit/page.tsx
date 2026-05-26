@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getCurrentUserContext } from "@/lib/auth/get-current-user-context";
-import { updateJobCoreFields } from "@/lib/db/jobs";
+import { updateJobCoreFieldsServer } from "@/lib/db/jobs-server";
 import { getStatusLabel } from "@/lib/job-status";
 import { createClient } from "@/lib/supabase/server";
 import type { JobStatus } from "@/types/jobblocker";
@@ -43,6 +43,7 @@ async function updateWorkingJob(formData: FormData) {
   const customerName = String(formData.get("customer_name") || "").trim();
   const jobType = String(formData.get("job_type") || "").trim();
   const jobAddress = String(formData.get("job_address") || "").trim();
+  const jobCompanyId = String(formData.get("job_company_id") || "").trim();
   const status = String(formData.get("status") || "").trim() as JobStatus;
   const nextAction = String(formData.get("next_action") || "").trim();
 
@@ -58,7 +59,18 @@ async function updateWorkingJob(formData: FormData) {
     redirect(`/app/jobs/${jobId}/edit?error=Invalid+status+selected.`);
   }
 
-  await updateJobCoreFields(jobId, context.companyId, {
+  if (!jobCompanyId) {
+    redirect(`/app/jobs/${jobId}/edit?error=Missing+job+company+context.`);
+  }
+
+  console.log("[WorkingAppEditJob] updateWorkingJob payload", {
+    jobId,
+    jobCompanyId,
+    name,
+    jobAddress,
+  });
+
+  await updateJobCoreFieldsServer(jobId, jobCompanyId, {
     name,
     customer_name: customerName,
     job_type: jobType,
@@ -73,7 +85,7 @@ async function updateWorkingJob(formData: FormData) {
       status,
     })
     .eq("id", jobId)
-    .eq("company_id", context.companyId)
+    .eq("company_id", jobCompanyId)
     .select("id")
     .maybeSingle();
 
@@ -159,6 +171,11 @@ export default async function WorkingAppEditJobPage({ params, searchParams }: Ed
     );
   }
 
+  console.log("[WorkingAppEditJob] render job company context", {
+    jobId: id,
+    dataCompanyId: data.company_id,
+  });
+
   return (
     <div className="min-h-screen bg-slate-100">
       <AppHeader />
@@ -180,6 +197,7 @@ export default async function WorkingAppEditJobPage({ params, searchParams }: Ed
 
             <form action={updateWorkingJob} className="mt-4 space-y-3">
               <input type="hidden" name="job_id" value={id} />
+              <input type="hidden" name="job_company_id" value={data.company_id} />
 
               <label className="block">
                 <span className="text-sm font-bold text-slate-800">Job name</span>

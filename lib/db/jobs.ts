@@ -102,10 +102,14 @@ export async function updateJobCoreFields(
     .eq("id", jobId)
     .eq("company_id", companyId)
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (!data) {
+    throw new Error("Failed to update job: no matching job found for this company.");
   }
 
   return data;
