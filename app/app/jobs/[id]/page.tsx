@@ -894,8 +894,9 @@ export default async function WorkingAppJobDetailPage({
           </CardContent>
         </Card>
 
-        <Card id="notes" className="mt-4">
-          <CardContent className="p-6">
+        <section id="notes" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
             <h2 className="text-xl font-black text-slate-950">Notes</h2>
             <h3 className="mt-3 text-sm font-black text-slate-900">Reminder</h3>
             <p className="mt-1 text-xs text-slate-600">This appears on the dashboard card.</p>
@@ -962,8 +963,9 @@ export default async function WorkingAppJobDetailPage({
                 ))
               )}
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </section>
       </main>
     </div>
   );
