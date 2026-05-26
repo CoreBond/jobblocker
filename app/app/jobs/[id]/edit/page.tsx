@@ -97,13 +97,19 @@ async function updateWorkingJob(formData: FormData) {
     jobCompanyId,
   });
 
-  await updateJobCoreFieldsServer(jobId, jobCompanyId, {
-    name,
-    customer_name: customerName,
-    job_type: jobType,
-    job_address: jobAddress,
-    next_action: nextAction,
-  });
+  try {
+    await updateJobCoreFieldsServer(jobId, jobCompanyId, {
+      name,
+      customer_name: customerName,
+      job_type: jobType,
+      job_address: jobAddress,
+      next_action: nextAction,
+    });
+  } catch (error) {
+    console.error("[WorkingAppEditJob] core update failed", error);
+    const message = error instanceof Error ? error.message : "Failed to update job.";
+    redirect(`/app/jobs/${jobId}/edit?error=${encodeURIComponent(message)}`);
+  }
 
   console.log("[WorkingAppEditJob] updateWorkingJob after core update", {
     jobId,
@@ -127,13 +133,8 @@ async function updateWorkingJob(formData: FormData) {
     .select("id");
 
   if (error) {
-    console.error("[WorkingAppEditJob] updateWorkingJob early redirect: failed status update", {
-      jobId,
-      jobCompanyId,
-      status,
-      error: error.message,
-    });
-    redirect(`/app/jobs/${jobId}/edit?error=Failed+to+update+job.`);
+    console.error("[WorkingAppEditJob] status update failed", error);
+    redirect(`/app/jobs/${jobId}/edit?error=${encodeURIComponent(error.message)}`);
   }
 
   console.log("[WorkingAppEditJob] updateWorkingJob after status update", {
