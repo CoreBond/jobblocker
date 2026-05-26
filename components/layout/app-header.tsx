@@ -35,7 +35,7 @@ export function AppHeader() {
         </Link>
         <nav className="flex items-center gap-2">
           <Button asChild variant="ghost" className="text-white hover:bg-slate-800">
-            <Link href="/app">Working App</Link>
+            <Link href="/app">Open App</Link>
           </Button>
           <Button asChild variant="ghost" className="text-white hover:bg-slate-800">
             <Link href="/jobs">Jobs</Link>

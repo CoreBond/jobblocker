@@ -27,6 +27,7 @@ async function createWorkingJob(formData: FormData) {
   const name = String(formData.get("name") || "").trim();
   const customerName = String(formData.get("customer_name") || "").trim();
   const jobType = String(formData.get("job_type") || "").trim();
+  const jobAddress = String(formData.get("job_address") || "").trim();
   const nextAction = String(formData.get("next_action") || "").trim();
   const statusRaw = String(formData.get("status") || "").trim();
   const status = statusRaw || "active";
@@ -41,6 +42,7 @@ async function createWorkingJob(formData: FormData) {
     name,
     customer_name: customerName || null,
     job_type: jobType || null,
+    job_address: jobAddress || null,
     status,
     next_action: nextAction || "Review job details.",
   });
@@ -122,9 +124,10 @@ export default async function WorkingAppNewJobPage({ searchParams }: CreateJobPa
                 <Input name="customer_name" placeholder="Smith Family" />
               </label>
 
-              <p className="rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
-                Address/location support needs a later schema update and is not saved yet.
-              </p>
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Job address / location</span>
+                <Input name="job_address" placeholder="123 Main St, Casper, WY" />
+              </label>
 
               <label className="block">
                 <span className="text-sm font-bold text-slate-800">Job type (optional)</span>
