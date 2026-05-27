@@ -478,6 +478,64 @@ export default async function WorkingAppJobDetailPage({
     redirect(`/app/jobs/${jobId}`);
   }
 
+  async function updatePermitStatusInline(formData: FormData) {
+    "use server";
+
+    const context = await getCurrentUserContext();
+
+    if (!context.isAuthenticated) {
+      redirect("/login");
+    }
+
+    if (!context.companyId) {
+      redirect("/app/jobs?permitError=Company+setup+is+required+before+updating+permits.");
+    }
+
+    const jobId = String(formData.get("job_id") || "").trim();
+    const permitId = String(formData.get("permit_id") || "").trim();
+    const statusRaw = String(formData.get("status") || "").trim() as PermitStatus;
+    const status = PERMIT_STATUSES.includes(statusRaw) ? statusRaw : "needed";
+
+    if (!jobId || !permitId) {
+      redirect("/app/jobs?permitError=Missing+permit+context.");
+    }
+
+    const supabase = await createClient();
+    const { data: jobRow, error: jobError } = await supabase
+      .from("jobs")
+      .select("id")
+      .eq("id", jobId)
+      .eq("company_id", context.companyId)
+      .maybeSingle();
+
+    if (jobError || !jobRow) {
+      redirect(`/app/jobs/${jobId}?permitError=Job+not+found+for+your+company.#permits`);
+    }
+
+    const { data: permitRow, error: permitError } = await supabase
+      .from("permits")
+      .select("id")
+      .eq("id", permitId)
+      .eq("job_id", jobId)
+      .maybeSingle();
+
+    if (permitError || !permitRow) {
+      redirect(`/app/jobs/${jobId}?permitError=Permit+not+found+for+this+job.#permits`);
+    }
+
+    const { error: updateError } = await supabase
+      .from("permits")
+      .update({ status })
+      .eq("id", permitId)
+      .eq("job_id", jobId);
+
+    if (updateError) {
+      redirect(`/app/jobs/${jobId}?permitError=${encodeURIComponent(updateError.message)}#permits`);
+    }
+
+    redirect(`/app/jobs/${jobId}#permits`);
+  }
+
   async function addJobNote(formData: FormData) {
     "use server";
 
@@ -811,8 +869,12 @@ export default async function WorkingAppJobDetailPage({
                     <div key={permit.id} className={getPermitCardClass(urgency)}>
                       <b>{permit.permit_type}</b>
 
+                      <p className="mt-1 text-slate-600">
+                        <span className="font-semibold text-slate-700">Status:</span> {getPermitStatusLabel(permit.status)}
+                      </p>
+
                       <p className="text-slate-600">
-                        {permit.permit_number || "No permit number"}  |  {getPermitStatusLabel(permit.status)}
+                        <span className="font-semibold text-slate-700">Permit #:</span> {permit.permit_number || "No permit number"}
                       </p>
 
                       <p className="text-xs text-slate-500">
@@ -824,6 +886,25 @@ export default async function WorkingAppJobDetailPage({
                           {urgencyMessage}
                         </p>
                       ) : null}
+
+                      <form action={updatePermitStatusInline} className="mt-3 flex flex-wrap items-center gap-2">
+                        <input type="hidden" name="job_id" value={job.id} />
+                        <input type="hidden" name="permit_id" value={permit.id} />
+                        <select
+                          name="status"
+                          defaultValue={permit.status}
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900"
+                        >
+                          {PERMIT_STATUSES.map((statusOption) => (
+                            <option key={statusOption} value={statusOption}>
+                              {getPermitStatusLabel(statusOption)}
+                            </option>
+                          ))}
+                        </select>
+                        <Button type="submit" variant="outline" className="px-3 py-1.5 text-xs">
+                          Update Status
+                        </Button>
+                      </form>
                     </div>
                   );
                 })
