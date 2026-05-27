@@ -93,20 +93,61 @@ export default async function WorkingAppJobsPage() {
             {!error && jobs.length > 0 ? (
               <div className="mt-4 space-y-3">
                 {jobs.map((job) => (
-                  <Link key={job.id} href={`/app/jobs/${job.id}`} className="block" aria-label={`Open job ${job.name}`}>
-                    <div className="rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md">
-                      <p className="text-lg font-black text-slate-950">
-                        {job.customer_name || job.name}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-700">Job: {job.name}</p>
-                      <p className="mt-1 text-sm text-slate-700">Job type: {job.job_type || "Not set"}</p>
-                      {job.job_address ? <p className="mt-1 text-xs text-slate-600">{job.job_address}</p> : null}
-                      <p className="mt-1 text-sm text-slate-700">Status: {getStatusLabel(job.status) || "Not set"}</p>
-                      <p className="mt-1 text-sm text-slate-700">
-                        Next action: {job.next_action || "Not set"}
-                      </p>
+                  <div key={job.id} className="rounded-xl border border-slate-200 bg-white p-4 transition hover:-translate-y-0.5 hover:shadow-md">
+                    <p className="text-lg font-black text-slate-950">
+                      {job.customer_name || job.name}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-700">Job: {job.name}</p>
+                    <p className="mt-1 text-sm text-slate-700">Job type: {job.job_type || "Not set"}</p>
+                    {job.job_address ? <p className="mt-1 text-xs text-slate-600">{job.job_address}</p> : null}
+                    <p className="mt-1 text-sm text-slate-700">Status: {getStatusLabel(job.status) || "Not set"}</p>
+                    <p className="mt-1 text-sm text-slate-700">
+                      Next action: {job.next_action || "Not set"}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        href={`/app/jobs/${job.id}`}
+                        className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                      >
+                        Open job
+                      </Link>
+                      {job.job_address ? (
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.job_address)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                        >
+                          Open Map
+                        </a>
+                      ) : null}
+                      {job.customer_phone ? (
+                        <a
+                          href={`tel:${job.customer_phone.replace(/[^\d+]/g, "")}`}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                        >
+                          Call
+                        </a>
+                      ) : null}
+                      {job.customer_email ? (
+                        <a
+                          href={`mailto:${job.customer_email}`}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                        >
+                          Email
+                        </a>
+                      ) : null}
+                      {job.next_action ? (
+                        <Link
+                          href={`/app/jobs/${job.id}#notes`}
+                          className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                        >
+                          Reminder
+                        </Link>
+                      ) : null}
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             ) : null}
