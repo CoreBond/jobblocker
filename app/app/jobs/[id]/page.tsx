@@ -211,6 +211,11 @@ export default async function WorkingAppJobDetailPage({
 
     const oldReminder = currentJob?.next_action?.trim() || "";
     const newReminder = reminderText || "";
+
+    if (newReminder === oldReminder) {
+      redirect(`/app/jobs/${jobId}#notes`);
+    }
+
     const reminderHistoryNote =
       oldReminder && newReminder
         ? `Reminder updated from "${oldReminder}" to "${newReminder}"`
