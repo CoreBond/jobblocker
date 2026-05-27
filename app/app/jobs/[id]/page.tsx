@@ -641,10 +641,14 @@ export default async function WorkingAppJobDetailPage({
             </h1>
             <p className="mt-2 text-sm text-slate-700">Job: {job.name}</p>
             <p className="mt-1 text-sm text-slate-700">Job type: {job.job_type || "Not set"}</p>
-            {job.job_address ? <p className="mt-1 text-xs text-slate-600">Address: {job.job_address}</p> : null}
-            {job.customer_phone ? <p className="mt-1 text-xs text-slate-600">Phone: {job.customer_phone}</p> : null}
-            {job.customer_email ? <p className="mt-1 text-xs text-slate-600">Email: {job.customer_email}</p> : null}
-            <p className="mt-1 text-sm text-slate-700">Status: {getStatusLabel(job.status) || "Not set"}</p>
+            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-black uppercase tracking-wide text-slate-500">Contact / Location</p>
+              <p className="mt-1 text-sm text-slate-700">Customer: {job.customer_name || "Not set"}</p>
+              {job.job_address ? <p className="mt-1 text-xs text-slate-600">Address: {job.job_address}</p> : null}
+              {job.customer_phone ? <p className="mt-1 text-xs text-slate-600">Phone: {job.customer_phone}</p> : null}
+              {job.customer_email ? <p className="mt-1 text-xs text-slate-600">Email: {job.customer_email}</p> : null}
+            </div>
+            <p className="mt-3 text-sm text-slate-700">Status: {getStatusLabel(job.status) || "Not set"}</p>
             <p className="mt-1 text-sm text-slate-700">
               Reminder: {job.next_action || "Not set"}
             </p>
