@@ -13,6 +13,8 @@ export async function updateJobCoreFieldsServer(
   input: {
     name: string;
     customer_name: string;
+    customer_phone?: string;
+    customer_email?: string;
     job_type: string;
     job_address?: string;
     next_action: string;
@@ -26,6 +28,8 @@ export async function updateJobCoreFieldsServer(
     .update({
       name: input.name.trim(),
       customer_name: input.customer_name.trim() || null,
+      customer_phone: input.customer_phone?.trim() || null,
+      customer_email: input.customer_email?.trim() || null,
       job_type: input.job_type.trim() || null,
       job_address: input.job_address?.trim() || null,
       next_action: input.next_action.trim() || null,

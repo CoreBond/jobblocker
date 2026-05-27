@@ -41,6 +41,8 @@ async function updateWorkingJob(formData: FormData) {
   const jobId = String(formData.get("job_id") || "").trim();
   const name = String(formData.get("name") || "").trim();
   const customerName = String(formData.get("customer_name") || "").trim();
+  const customerPhone = String(formData.get("customer_phone") || "").trim();
+  const customerEmail = String(formData.get("customer_email") || "").trim();
   const jobType = String(formData.get("job_type") || "").trim();
   const jobAddress = String(formData.get("job_address") || "").trim();
   const jobCompanyId = String(formData.get("job_company_id") || "").trim();
@@ -80,6 +82,8 @@ async function updateWorkingJob(formData: FormData) {
     await updateJobCoreFieldsServer(jobId, jobCompanyId, {
       name,
       customer_name: customerName,
+      customer_phone: customerPhone,
+      customer_email: customerEmail,
       job_type: jobType,
       job_address: jobAddress,
       next_action: nextAction,
@@ -215,6 +219,16 @@ export default async function WorkingAppEditJobPage({ params, searchParams }: Ed
               <label className="block">
                 <span className="text-sm font-bold text-slate-800">Customer name</span>
                 <Input name="customer_name" defaultValue={data.customer_name || ""} />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Customer phone</span>
+                <Input name="customer_phone" defaultValue={data.customer_phone || ""} />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Customer email</span>
+                <Input name="customer_email" type="email" defaultValue={data.customer_email || ""} />
               </label>
 
               <label className="block">

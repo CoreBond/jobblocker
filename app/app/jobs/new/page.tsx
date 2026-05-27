@@ -26,6 +26,8 @@ async function createWorkingJob(formData: FormData) {
 
   const name = String(formData.get("name") || "").trim();
   const customerName = String(formData.get("customer_name") || "").trim();
+  const customerPhone = String(formData.get("customer_phone") || "").trim();
+  const customerEmail = String(formData.get("customer_email") || "").trim();
   const jobAddress = String(formData.get("job_address") || "").trim();
   const jobType = String(formData.get("job_type") || "").trim();
   const nextAction = String(formData.get("next_action") || "").trim();
@@ -41,6 +43,8 @@ async function createWorkingJob(formData: FormData) {
     company_id: context.companyId,
     name,
     customer_name: customerName || null,
+    customer_phone: customerPhone || null,
+    customer_email: customerEmail || null,
     job_address: jobAddress || null,
     job_type: jobType || null,
     status,
@@ -122,6 +126,16 @@ export default async function WorkingAppNewJobPage({ searchParams }: CreateJobPa
               <label className="block">
                 <span className="text-sm font-bold text-slate-800">Customer name</span>
                 <Input name="customer_name" placeholder="Smith Family" />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Customer phone (optional)</span>
+                <Input name="customer_phone" placeholder="(303) 555-0100" />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-800">Customer email (optional)</span>
+                <Input name="customer_email" type="email" placeholder="customer@example.com" />
               </label>
 
               <label className="block">

@@ -637,6 +637,8 @@ export default async function WorkingAppJobDetailPage({
             <p className="mt-2 text-sm text-slate-700">Job: {job.name}</p>
             <p className="mt-1 text-sm text-slate-700">Job type: {job.job_type || "Not set"}</p>
             {job.job_address ? <p className="mt-1 text-xs text-slate-600">Address: {job.job_address}</p> : null}
+            {job.customer_phone ? <p className="mt-1 text-xs text-slate-600">Phone: {job.customer_phone}</p> : null}
+            {job.customer_email ? <p className="mt-1 text-xs text-slate-600">Email: {job.customer_email}</p> : null}
             <p className="mt-1 text-sm text-slate-700">Status: {getStatusLabel(job.status) || "Not set"}</p>
             <p className="mt-1 text-sm text-slate-700">
               Reminder: {job.next_action || "Not set"}
