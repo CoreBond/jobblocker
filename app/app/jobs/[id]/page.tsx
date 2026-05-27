@@ -667,6 +667,36 @@ export default async function WorkingAppJobDetailPage({
                   Email: <a href={`mailto:${job.customer_email}`} className="underline hover:text-slate-800">{job.customer_email}</a>
                 </p>
               ) : null}
+              {job.job_address || job.customer_phone || job.customer_email ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {job.job_address ? (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.job_address)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900"
+                    >
+                      Open Map
+                    </a>
+                  ) : null}
+                  {job.customer_phone ? (
+                    <a
+                      href={`tel:${job.customer_phone.replace(/[^\d+]/g, "")}`}
+                      className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900"
+                    >
+                      Call
+                    </a>
+                  ) : null}
+                  {job.customer_email ? (
+                    <a
+                      href={`mailto:${job.customer_email}`}
+                      className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900"
+                    >
+                      Email
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <p className="mt-3 text-sm text-slate-700">Status: {getStatusLabel(job.status) || "Not set"}</p>
             <p className="mt-1 text-sm text-slate-700">
