@@ -644,7 +644,19 @@ export default async function WorkingAppJobDetailPage({
             <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="text-xs font-black uppercase tracking-wide text-slate-500">Contact / Location</p>
               <p className="mt-1 text-sm text-slate-700">Customer: {job.customer_name || "Not set"}</p>
-              {job.job_address ? <p className="mt-1 text-xs text-slate-600">Address: {job.job_address}</p> : null}
+              {job.job_address ? (
+                <p className="mt-1 text-xs text-slate-600">
+                  Address:{" "}
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.job_address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-slate-800"
+                  >
+                    {job.job_address}
+                  </a>
+                </p>
+              ) : null}
               {job.customer_phone ? (
                 <p className="mt-1 text-xs text-slate-600">
                   Phone: <a href={`tel:${job.customer_phone.replace(/[^\d+]/g, "")}`} className="underline hover:text-slate-800">{job.customer_phone}</a>
