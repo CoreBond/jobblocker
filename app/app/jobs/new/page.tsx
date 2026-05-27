@@ -118,45 +118,52 @@ export default async function WorkingAppNewJobPage({ searchParams }: CreateJobPa
             ) : null}
 
             <form action={createWorkingJob} className="mt-4 space-y-3">
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Job name</span>
-                <Input name="name" placeholder="Kitchen Remodel - Smith" required />
-              </label>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs font-black uppercase tracking-wide text-slate-500">Customer</p>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Customer name</span>
-                <Input name="customer_name" placeholder="Smith Family" />
-              </label>
+                <div className="mt-2 space-y-3">
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Customer name</span>
+                    <Input name="customer_name" placeholder="Smith Family" />
+                  </label>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Customer phone (optional)</span>
-                <Input name="customer_phone" placeholder="(303) 555-0100" />
-              </label>
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Job address / location</span>
+                    <Input name="job_address" placeholder="123 Main St, Denver, CO" />
+                  </label>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Customer email (optional)</span>
-                <Input name="customer_email" type="email" placeholder="customer@example.com" />
-              </label>
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Customer phone (optional)</span>
+                    <Input name="customer_phone" placeholder="(303) 555-0100" />
+                  </label>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Job address / location (optional)</span>
-                <Input name="job_address" placeholder="123 Main St, Denver, CO" />
-              </label>
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Customer email (optional)</span>
+                    <Input name="customer_email" type="email" placeholder="customer@example.com" />
+                  </label>
+                </div>
+              </div>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Job type (optional)</span>
-                <Input name="job_type" placeholder="Residential Remodel" />
-              </label>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs font-black uppercase tracking-wide text-slate-500">Job Details</p>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Status (optional)</span>
-                <Input name="status" defaultValue="active" />
-              </label>
+                <div className="mt-2 space-y-3">
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Job name</span>
+                    <Input name="name" placeholder="Kitchen Remodel - Smith" required />
+                  </label>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Next action (optional)</span>
-                <Input name="next_action" defaultValue="Review job details." />
-              </label>
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Job type (optional)</span>
+                    <Input name="job_type" placeholder="Residential Remodel" />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Next action</span>
+                    <Input name="next_action" defaultValue="Review job details." />
+                  </label>
+                </div>
+              </div>
 
               <div className="flex flex-wrap gap-2">
                 <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
