@@ -906,8 +906,10 @@ export default async function WorkingAppJobDetailPage({
           <Card>
             <CardContent className="p-6">
             <h2 className="text-xl font-black text-slate-950">Notes</h2>
-            <h3 className="mt-3 text-sm font-black text-slate-900">Reminder</h3>
-            <p className="mt-1 text-xs text-slate-600">This appears on the dashboard card.</p>
+            <h3 className="mt-3 text-sm font-black text-slate-900">Next Action Reminder</h3>
+            <p className="mt-1 text-xs text-slate-600">
+              Set the current next action for this job. This reminder is saved to the job record and shown in job views.
+            </p>
 
             {reminderError ? (
               <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
@@ -915,15 +917,15 @@ export default async function WorkingAppJobDetailPage({
               </p>
             ) : null}
 
-            <form action={updateJobReminder} className="mt-3 space-y-3">
+            <form action={updateJobReminder} className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3">
               <input type="hidden" name="job_id" value={job.id} />
               <label className="block">
-                <span className="text-sm font-bold text-slate-800">Reminder</span>
+                <span className="text-sm font-bold text-slate-800">Next action / reminder</span>
                 <textarea
                   name="reminder"
                   defaultValue={job.next_action || ""}
                   className="mt-1 min-h-20 w-full rounded-xl border border-slate-300 bg-white px-3 py-3 text-sm text-slate-900 outline-none focus:border-orange-500"
-                  placeholder="Set the current reminder for this job."
+                  placeholder="Example: Call city permit desk by Friday at 10 AM."
                 />
               </label>
               <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
