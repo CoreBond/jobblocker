@@ -645,8 +645,16 @@ export default async function WorkingAppJobDetailPage({
               <p className="text-xs font-black uppercase tracking-wide text-slate-500">Contact / Location</p>
               <p className="mt-1 text-sm text-slate-700">Customer: {job.customer_name || "Not set"}</p>
               {job.job_address ? <p className="mt-1 text-xs text-slate-600">Address: {job.job_address}</p> : null}
-              {job.customer_phone ? <p className="mt-1 text-xs text-slate-600">Phone: {job.customer_phone}</p> : null}
-              {job.customer_email ? <p className="mt-1 text-xs text-slate-600">Email: {job.customer_email}</p> : null}
+              {job.customer_phone ? (
+                <p className="mt-1 text-xs text-slate-600">
+                  Phone: <a href={`tel:${job.customer_phone.replace(/[^\d+]/g, "")}`} className="underline hover:text-slate-800">{job.customer_phone}</a>
+                </p>
+              ) : null}
+              {job.customer_email ? (
+                <p className="mt-1 text-xs text-slate-600">
+                  Email: <a href={`mailto:${job.customer_email}`} className="underline hover:text-slate-800">{job.customer_email}</a>
+                </p>
+              ) : null}
             </div>
             <p className="mt-3 text-sm text-slate-700">Status: {getStatusLabel(job.status) || "Not set"}</p>
             <p className="mt-1 text-sm text-slate-700">
