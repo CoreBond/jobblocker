@@ -292,6 +292,7 @@ export default function JobDetailPage() {
   const [editName, setEditName] = useState("");
   const [editCustomerName, setEditCustomerName] = useState("");
   const [editJobType, setEditJobType] = useState("");
+  const [editJobAddress, setEditJobAddress] = useState("");
   const [editNextAction, setEditNextAction] = useState("");
   const [saving, setSaving] = useState(false);
   const missingCompanyId = !companyId;
@@ -321,6 +322,7 @@ export default function JobDetailPage() {
         setEditName(jobRow.name || "");
         setEditCustomerName(jobRow.customer_name || "");
         setEditJobType(jobRow.job_type || "");
+        setEditJobAddress(jobRow.job_address || "");
         setEditNextAction(jobRow.next_action || "");
       }
     } catch (err) {
@@ -510,6 +512,7 @@ export default function JobDetailPage() {
         name: editName,
         customer_name: editCustomerName,
         job_type: editJobType,
+        job_address: editJobAddress,
         next_action: editNextAction,
       });
       await loadEverything();
@@ -560,6 +563,7 @@ export default function JobDetailPage() {
                   <div>
                     <h1 className="text-2xl font-black text-slate-950">{job.name}</h1>
                     <p className="mt-1 text-sm text-slate-600">{job.job_type || "No job type set"}</p>
+                    {job.job_address ? <p className="mt-1 text-sm text-slate-600">{job.job_address}</p> : null}
                   </div>
                   <JobStatusChip status={job.status} />
                 </div>
@@ -630,6 +634,11 @@ export default function JobDetailPage() {
                       <label className="block">
                         <SmallLabel>Job type</SmallLabel>
                         <Input value={editJobType} onChange={(event) => setEditJobType(event.target.value)} />
+                      </label>
+
+                      <label className="block">
+                        <SmallLabel>Job address / location</SmallLabel>
+                        <Input value={editJobAddress} onChange={(event) => setEditJobAddress(event.target.value)} />
                       </label>
 
                       <label className="block">
