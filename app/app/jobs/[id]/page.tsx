@@ -639,9 +639,26 @@ export default async function WorkingAppJobDetailPage({
             <h1 className="mt-1 text-3xl font-black text-slate-950">
               {job.customer_name || job.name}
             </h1>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a href="#contact-location" className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900">
+                Contact
+              </a>
+              <a href="#permits" className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900">
+                Permits
+              </a>
+              <a href="#inspections" className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900">
+                Inspections
+              </a>
+              <a href="#reminder" className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900">
+                Reminder
+              </a>
+              <a href="#notes" className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900">
+                Notes
+              </a>
+            </div>
             <p className="mt-2 text-sm text-slate-700">Job: {job.name}</p>
             <p className="mt-1 text-sm text-slate-700">Job type: {job.job_type || "Not set"}</p>
-            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div id="contact-location" className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="text-xs font-black uppercase tracking-wide text-slate-500">Contact / Location</p>
               <p className="mt-1 text-sm text-slate-700">Customer: {job.customer_name || "Not set"}</p>
               {job.job_address ? (
@@ -719,8 +736,9 @@ export default async function WorkingAppJobDetailPage({
           </CardContent>
         </Card>
 
-        <Card className="mt-4">
-          <CardContent className="p-6">
+        <section id="permits" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
             <h2 className="text-xl font-black text-slate-950">Permits</h2>
             <p className="mt-1 text-sm text-slate-600">Track permits, numbers, status, and expiration dates.</p>
 
@@ -811,11 +829,13 @@ export default async function WorkingAppJobDetailPage({
                 })
               )}
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </section>
 
-        <Card className="mt-4">
-          <CardContent className="p-6">
+        <section id="inspections" className="mt-4">
+          <Card>
+            <CardContent className="p-6">
             <h2 className="text-xl font-black text-slate-950">Inspections</h2>
             <p className="mt-1 text-sm text-slate-600">Track scheduled, passed, failed, and reinspection work.</p>
 
@@ -953,14 +973,15 @@ export default async function WorkingAppJobDetailPage({
                 })
               )}
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </section>
 
         <section id="notes" className="mt-4">
           <Card>
             <CardContent className="p-6">
             <h2 className="text-xl font-black text-slate-950">Notes</h2>
-            <h3 className="mt-3 text-sm font-black text-slate-900">Next Action Reminder</h3>
+            <h3 id="reminder" className="mt-3 text-sm font-black text-slate-900">Next Action Reminder</h3>
             <p className="mt-1 text-xs text-slate-600">
               Set the current next action for this job. This reminder is saved to the job record and shown in job views.
             </p>
