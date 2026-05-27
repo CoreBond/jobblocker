@@ -211,55 +211,73 @@ export default async function WorkingAppEditJobPage({ params, searchParams }: Ed
               <input type="hidden" name="job_id" value={id} />
               <input type="hidden" name="job_company_id" value={data.company_id} />
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Job name</span>
-                <Input name="name" defaultValue={data.name || ""} required />
-              </label>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs font-black uppercase tracking-wide text-slate-500">Customer</p>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Customer name</span>
-                <Input name="customer_name" defaultValue={data.customer_name || ""} />
-              </label>
+                <div className="mt-2 space-y-3">
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Customer name</span>
+                    <Input name="customer_name" defaultValue={data.customer_name || ""} />
+                  </label>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Customer phone</span>
-                <Input name="customer_phone" defaultValue={data.customer_phone || ""} />
-              </label>
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Customer phone</span>
+                    <Input name="customer_phone" defaultValue={data.customer_phone || ""} />
+                  </label>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Customer email</span>
-                <Input name="customer_email" type="email" defaultValue={data.customer_email || ""} />
-              </label>
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Customer email</span>
+                    <Input name="customer_email" type="email" defaultValue={data.customer_email || ""} />
+                  </label>
+                </div>
+              </div>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Job type</span>
-                <Input name="job_type" defaultValue={data.job_type || ""} />
-              </label>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs font-black uppercase tracking-wide text-slate-500">Location</p>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Job address / location</span>
-                <Input name="job_address" defaultValue={data.job_address || ""} />
-              </label>
+                <div className="mt-2 space-y-3">
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Job address / location</span>
+                    <Input name="job_address" defaultValue={data.job_address || ""} />
+                  </label>
+                </div>
+              </div>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Status</span>
-                <select
-                  name="status"
-                  defaultValue={data.status || "active"}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-                >
-                  {ALLOWED_STATUSES.map((statusOption) => (
-                    <option key={statusOption} value={statusOption}>
-                      {getStatusLabel(statusOption)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="text-xs font-black uppercase tracking-wide text-slate-500">Job Details</p>
 
-              <label className="block">
-                <span className="text-sm font-bold text-slate-800">Next action</span>
-                <Input name="next_action" defaultValue={data.next_action || ""} />
-              </label>
+                <div className="mt-2 space-y-3">
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Job name</span>
+                    <Input name="name" defaultValue={data.name || ""} required />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Job type</span>
+                    <Input name="job_type" defaultValue={data.job_type || ""} />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Status</span>
+                    <select
+                      name="status"
+                      defaultValue={data.status || "active"}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+                    >
+                      {ALLOWED_STATUSES.map((statusOption) => (
+                        <option key={statusOption} value={statusOption}>
+                          {getStatusLabel(statusOption)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-800">Next action</span>
+                    <Input name="next_action" defaultValue={data.next_action || ""} />
+                  </label>
+                </div>
+              </div>
 
               <div className="flex flex-wrap gap-2">
                 <Button type="submit" className="bg-orange-600 hover:bg-orange-700">
