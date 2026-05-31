@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getCurrentUserContext } from "@/lib/auth/get-current-user-context";
+import { createActivity } from "@/lib/db/activity";
 import { getStatusLabel } from "@/lib/job-status";
 import { createClient } from "@/lib/supabase/server";
 import type { Inspection, InspectionStatus, Job, Permit, PermitStatus } from "@/types/jobblocker";
@@ -230,7 +231,7 @@ export default async function WorkingAppJobDetailPage({
     redirect(`/app/jobs/${jobId}#notes`);
   }
 
-  async function updateInspectionStatusInline(formData: FormData) {
+  async function updateInspectionCardStatus(formData: FormData) {
     "use server";
 
     const context = await getCurrentUserContext();
@@ -248,16 +249,20 @@ export default async function WorkingAppJobDetailPage({
     const inspectionStatusRaw = String(formData.get("inspection_status") || "").trim();
     const inspectionStatus = INSPECTION_STATUSES.includes(inspectionStatusRaw as InspectionStatus)
       ? (inspectionStatusRaw as InspectionStatus)
-      : "needed";
+      : null;
 
     if (!jobId || !inspectionId) {
       redirect("/app/jobs?inspectionUpdateError=Missing+inspection+context.");
     }
 
+    if (!inspectionStatus) {
+      redirect(`/app/jobs/${jobId}?inspectionUpdateError=Invalid+inspection+status.#inspections`);
+    }
+
     const supabase = await createClient();
     const { data: jobRow, error: jobError } = await supabase
       .from("jobs")
-      .select("id, next_action")
+      .select("id")
       .eq("id", jobId)
       .eq("company_id", context.companyId)
       .maybeSingle();
@@ -274,7 +279,7 @@ export default async function WorkingAppJobDetailPage({
       .maybeSingle();
 
     if (inspectionError || !inspectionRow) {
-      redirect(`/app/jobs/${jobId}?inspectionUpdateError=Inspection+not+found+for+this+job.`);
+      redirect(`/app/jobs/${jobId}?inspectionUpdateError=Inspection+not+found+for+this+job.#inspections`);
     }
 
     const { error: updateInspectionError } = await supabase
@@ -284,40 +289,24 @@ export default async function WorkingAppJobDetailPage({
       .eq("job_id", jobId);
 
     if (updateInspectionError) {
-      redirect(`/app/jobs/${jobId}?inspectionUpdateError=${encodeURIComponent(updateInspectionError.message)}`);
+      redirect(`/app/jobs/${jobId}?inspectionUpdateError=${encodeURIComponent(updateInspectionError.message)}#inspections`);
     }
 
-    if (inspectionStatus === "failed" || inspectionStatusRaw === "reinspection_needed") {
-      const updatePayload: { status: Job["status"]; next_action?: string } = {
-        status: "needs_attention",
-      };
+    await createActivity({
+      company_id: context.companyId,
+      job_id: jobId,
+      action:
+        inspectionStatus === "passed"
+          ? "inspection_passed"
+          : inspectionStatus === "failed"
+            ? "inspection_failed"
+            : "inspection_updated",
+      entity_type: "inspection",
+      entity_id: inspectionId,
+      message: `Inspection marked ${inspectionStatus}: ${inspectionRow.inspection_type}`,
+    });
 
-      if (shouldReplaceNextAction(jobRow.next_action ?? null)) {
-        updatePayload.next_action = `Resolve inspection issue: ${inspectionRow.inspection_type}`;
-      }
-
-      await supabase
-        .from("jobs")
-        .update(updatePayload)
-        .eq("id", jobId)
-        .eq("company_id", context.companyId);
-    } else if (inspectionStatus === "scheduled") {
-      const updatePayload: { status: Job["status"]; next_action?: string } = {
-        status: "inspection_phase",
-      };
-
-      if (shouldReplaceNextAction(jobRow.next_action ?? null)) {
-        updatePayload.next_action = `Complete scheduled inspection: ${inspectionRow.inspection_type}`;
-      }
-
-      await supabase
-        .from("jobs")
-        .update(updatePayload)
-        .eq("id", jobId)
-        .eq("company_id", context.companyId);
-    }
-
-    redirect(`/app/jobs/${jobId}`);
+    redirect(`/app/jobs/${jobId}#inspections`);
   }
 
   async function addJobInspection(formData: FormData) {
@@ -1031,7 +1020,7 @@ export default async function WorkingAppJobDetailPage({
                         </p>
                       ) : null}
 
-                      <form action={updateInspectionStatusInline} className="mt-3 flex flex-wrap items-center gap-2">
+                      <form action={updateInspectionCardStatus} className="mt-3 flex flex-wrap items-center gap-2">
                         <input type="hidden" name="job_id" value={job.id} />
                         <input type="hidden" name="inspection_id" value={inspection.id} />
                         <select
